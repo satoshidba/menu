@@ -3,6 +3,7 @@ uses the caller's scoped Larder API token, so the API's scopes, review rules and
 from __future__ import annotations
 
 import os
+import ssl
 import uuid
 from typing import Any
 
@@ -23,7 +24,7 @@ def _detail_text(detail: Any) -> str:
 
 
 class LarderClient:
-    def __init__(self, base_url: str, token: str, verify: bool | str = True, timeout: float = 60.0):
+    def __init__(self, base_url: str, token: str, verify: "bool | ssl.SSLContext" = True, timeout: float = 60.0):
         if not token:
             raise ToolError("No Larder API token. Create one in Larder: Settings → Connected apps → New token.")
         self.base = base_url.rstrip("/") + "/api/v1"
@@ -67,8 +68,14 @@ class LarderClient:
         return await self.request("DELETE", path)
 
 
-def verify_setting() -> bool | str:
-    """LARDER_CA_CERT points at Caddy's root certificate for home-network installs; LARDER_INSECURE=1 disables checks."""
+def verify_setting() -> "bool | ssl.SSLContext":
+    """LARDER_CA_CERT points at Caddy's root certificate for home-network installs (trusted in addition to the system
+    roots); LARDER_INSECURE=1 disables certificate checks (testing only)."""
     if os.environ.get("LARDER_INSECURE") == "1":
         return False
-    return os.environ.get("LARDER_CA_CERT") or True
+    ca = os.environ.get("LARDER_CA_CERT")
+    if not ca:
+        return True
+    ctx = ssl.create_default_context()
+    ctx.load_verify_locations(cafile=ca)
+    return ctx

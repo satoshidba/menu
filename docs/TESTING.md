@@ -35,6 +35,24 @@ docker compose run --rm -T -e LARDER_TEST_DATABASE_URL=postgresql+psycopg://lard
 | Absences | `test_absences.py`: conflicts flagged, "plan without" reduces servings, new meals default to who is home, multi-day and whole-day absences, validation, Today shows who's out |
 | Backup, restore and export | `test_backup_export.py`: backup and restore round trip (plain and encrypted) including media, wrong passphrase fails, export excludes secrets, import into an empty instance keeps versions and media |
 
+## MCP server
+
+`mcp-server/tests/test_tools.py` runs 6 end-to-end tests with a real MCP client against a running, seeded Larder.
+They check:
+- tool, prompt and resource listing, annotations and server instructions;
+- read tools;
+- plan → mark someone away → conflict → plan without them → shopping list, with clean-up;
+- add to pantry and use from it, including the never-below-zero shortfall;
+- receipt import, where apply is refused without `confirm`, then applied, then re-applied as a no-op;
+- readable errors.
+
+**Results (5 Nov 2026).**
+- 6/6 against the dev API.
+- 6/6 in stdio mode against the Docker stack over HTTPS, trusting Caddy's CA via `LARDER_CA_CERT`.
+- Remote transport through Caddy at `https://<site>/mcp`: 401 without a token, 37 tools listed, live data returned,
+  and token scope enforced (a child's intake is refused without `intake:read:children`).
+- The `mcp` service's container healthcheck passes.
+
 ## Release 1 acceptance
 
 | # | Result | Evidence and notes |

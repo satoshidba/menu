@@ -1,0 +1,2 @@
+# Optional: extra CA certificates (*.crt) to trust during image builds and at runtime,
+# e.g. for a TLS-inspecting corporate proxy. Leave empty normally.

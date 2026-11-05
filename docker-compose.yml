@@ -4,7 +4,8 @@ name: larder
 
 x-app: &app
   build:
-    context: ./backend
+    context: .
+    dockerfile: backend/Dockerfile
   image: larder-api:1.0.0
   restart: unless-stopped
   env_file: .env

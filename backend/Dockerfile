@@ -1,7 +1,12 @@
 # syntax=docker/dockerfile:1
 FROM python:3.12.16-slim-bookworm
 
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt PIP_CERT=/etc/ssl/certs/ca-certificates.crt
+
+# Optional extra CA certificates (certs/*.crt), e.g. behind a TLS-inspecting proxy. Empty by default.
+COPY certs/ /usr/local/share/ca-certificates/extra/
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && apt-get clean
 
 # OCR (receipts), PDF text, and a PostgreSQL 16 client for pg_dump/pg_restore (from the PGDG repository).
 RUN apt-get update \
@@ -13,14 +18,14 @@ RUN apt-get update \
  && apt-get purge -y gnupg && apt-get autoremove -y && apt-get clean
 
 WORKDIR /app
-COPY requirements.txt requirements-dev.txt ./
+COPY backend/requirements.txt backend/requirements-dev.txt ./
 RUN pip install -r requirements-dev.txt
 
-COPY alembic.ini pytest.ini ./
-COPY migrations ./migrations
-COPY app ./app
-COPY tests ./tests
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY backend/alembic.ini backend/pytest.ini ./
+COPY backend/migrations ./migrations
+COPY backend/app ./app
+COPY backend/tests ./tests
+COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN useradd --system --uid 10001 --home /app larder && mkdir -p /data && chown larder /data && chmod +x /usr/local/bin/docker-entrypoint.sh
 USER larder

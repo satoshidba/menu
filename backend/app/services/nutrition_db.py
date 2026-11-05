@@ -65,6 +65,8 @@ def item_contribution(db: Session, *, label: str, quantity: float | None, unit: 
                       food: Food | None = None, product: Product | None = None) -> Contribution:
     if product is not None and product.is_pet_food or (food is not None and food.is_pet_food):
         return Contribution(label, None, reason="Pet food is excluded from human nutrition")
+    if product is not None and product.kind == "medicine":
+        return Contribution(label, None, reason="Medicines are not counted as nutrition")
     if quantity is None or unit is None:
         return Contribution(label, None, reason="Amount not specified")
     rec = best_record(db, product_id=product.id if product else None, food_id=food.id if food else (product.food_id if product else None))
@@ -75,12 +77,33 @@ def item_contribution(db: Session, *, label: str, quantity: float | None, unit: 
     if product is not None and product.package_base_quantity and product.base_unit in ("g", "ml"):
         for u in ("pack", "packet", "tin", "can", "jar", "bag", "bottle", "pot"):
             factors.unit_grams.setdefault(u, product.package_base_quantity)
+    if rec.basis == "dose":
+        doses = doses_from(quantity, unit, product)
+        if doses is None:
+            return Contribution(label, None, reason=f"Record supplements in doses ({product.dose_unit if product else 'dose'})")
+        values, _ = clean_values(rec.nutrients or {})
+        return Contribution(label, {k: (None if v is None else v * doses) for k, v in values.items()}, estimated=not rec.verified,
+                            reason=f"{rec.source} per dose{' (verified)' if rec.verified else ''}")
     amount, why = amount_on_basis(quantity, unit, rec.basis, factors)
     if amount is None:
         return Contribution(label, None, reason=why or "Cannot convert amount to weight")
     values, _ = clean_values(rec.nutrients or {})
     return Contribution(label, scale(values, amount), estimated=not rec.verified,
                         reason=f"{rec.source}{' (verified)' if rec.verified else ''}")
+
+
+def doses_from(quantity: float, unit: str, product: Product | None) -> float | None:
+    """How many label doses `quantity unit` is. One dose = product.dose_amount × product.dose_unit."""
+    if unit == "dose":
+        return quantity
+    if product is None or not product.dose_unit:
+        return None
+    per = product.dose_amount or 1.0
+    if unit == product.dose_unit:
+        return quantity / per
+    from .units import convert
+    c = convert(quantity, unit, product.dose_unit)
+    return c.quantity / per if c.quantity is not None else None
 
 
 def recipe_nutrition(db: Session, version: RecipeVersion, servings: float | None = None) -> dict:

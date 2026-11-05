@@ -30,6 +30,8 @@ COUNT_UNITS = {
     "each", "clove", "slice", "tin", "can", "pack", "packet", "bunch", "pinch", "handful", "sprig", "stick",
     "sheet", "jar", "bag", "bottle", "head", "fillet", "piece", "rasher", "leaf", "pot", "punnet", "box", "sachet",
     "cube", "knob", "dash", "drop", "stalk", "ball", "bulb", "loaf",
+    # supplement / medicine dose units
+    "tablet", "capsule", "scoop", "gummy", "spray", "puff", "dose", "pastille", "lozenge",
 }
 # Units where a quantity is not meaningful for stock arithmetic (e.g. "a pinch of salt").
 NON_STOCK_UNITS = {"pinch", "dash", "drop", "handful", "knob"}

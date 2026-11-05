@@ -55,6 +55,15 @@ class Product(IdMixin, TimestampMixin, Base):
     provenance: Mapped[str] = mapped_column(String(32), default="manual")
     review_status: Mapped[str] = mapped_column(String(16), default="reviewed")
     min_stock_base: Mapped[float | None] = mapped_column(Float)
+    # food | pet_food | supplement | medicine. Supplements count towards nutrition per dose; medicines never do.
+    kind: Mapped[str] = mapped_column(String(16), default="food", server_default="food", index=True)
+    # Label / prescription directions as entered by the household. Larder never calculates doses.
+    dose_amount: Mapped[float | None] = mapped_column(Float)
+    dose_unit: Mapped[str | None] = mapped_column(String(16))  # tablet, capsule, ml, drop, scoop, g, sachet, gummy
+    label_min_interval_hours: Mapped[float | None] = mapped_column(Float)
+    label_max_doses_24h: Mapped[int | None] = mapped_column()
+    active_ingredients: Mapped[str | None] = mapped_column(String(300))
+    label_directions: Mapped[str | None] = mapped_column(Text)
     barcodes: Mapped[list["Barcode"]] = relationship(back_populates="product", cascade="all, delete-orphan")
     food: Mapped[Food | None] = relationship()
 
@@ -85,7 +94,7 @@ class NutritionRecord(IdMixin, TimestampMixin, Base):
     source_ref: Mapped[str | None] = mapped_column(String(300))  # CoFID code, OFF barcode, label photo path
     source_version: Mapped[str | None] = mapped_column(String(60))
     retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
-    basis: Mapped[str] = mapped_column(String(8), default="100g")  # 100g | 100ml
+    basis: Mapped[str] = mapped_column(String(8), default="100g")  # 100g | 100ml | dose (one dose_unit of a supplement)
     serving_size_g: Mapped[float | None] = mapped_column(Float)
     nutrients: Mapped[dict] = mapped_column(JSONB, default=dict)
     flags: Mapped[dict] = mapped_column(JSONB, default=dict)

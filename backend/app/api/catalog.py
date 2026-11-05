@@ -42,7 +42,8 @@ def product_out(p: Product, db: Session | None = None, with_nutrition: bool = Fa
            "ingredients_text": p.ingredients_text, "allergens": p.allergens or [], "traces": p.traces or [],
            "category": p.category, "is_pet_food": p.is_pet_food, "pet_profile_id": sid(p.pet_profile_id),
            "provenance": p.provenance, "review_status": p.review_status, "min_stock_base": p.min_stock_base,
-           "barcodes": [b.code for b in p.barcodes], "updated_at": iso(p.updated_at)}
+           "barcodes": [b.code for b in p.barcodes], "updated_at": iso(p.updated_at), "kind": p.kind,
+           "dose_amount": p.dose_amount, "dose_unit": p.dose_unit}
     if with_nutrition and db is not None:
         out["nutrition"] = record_dict(best_record(db, product_id=p.id)) if not p.is_pet_food else None
     return out
@@ -181,7 +182,7 @@ class NutritionIn(BaseModel):
     food_id: uuid.UUID | None = None
     product_id: uuid.UUID | None = None
     source: str = Field("label", pattern="^(label|manual|open_food_facts|ai)$")
-    basis: str = Field("100g", pattern="^(100g|100ml)$")
+    basis: str = Field("100g", pattern="^(100g|100ml|dose)$")
     serving_size_g: float | None = None
     nutrients: dict[str, float | None]
     verified: bool = False
@@ -199,6 +200,8 @@ def save_nutrition(db: Session, household_id: uuid.UUID, body: NutritionIn) -> N
         prod = get_owned(db, Product, body.product_id, household_id, "Product")
         if prod.is_pet_food:
             raise HTTPException(422, "Pet food does not take human nutrition records")
+        if prod.kind == "medicine":
+            raise HTTPException(422, "Medicines don't take nutrition values")
     else:
         get_owned(db, Food, body.food_id, household_id, "Food")
     # Supersede earlier records from the same source for the same target
@@ -288,7 +291,8 @@ def create_product(db: Session, p: Principal, body: ProductIn) -> Product:
         food = find_or_create_food(db, p.household_id, body.food_name, canonical_unit(body.package_unit or ""))
         if body.is_pet_food:
             food.is_pet_food = True
-    prod = Product(household_id=p.household_id, food_id=food.id if food else None, name=body.name, brand=body.brand,
+    prod = Product(household_id=p.household_id, kind="pet_food" if body.is_pet_food else "food", food_id=food.id if food else None,
+                   name=body.name, brand=body.brand,
                    ingredients_text=body.ingredients_text, allergens=body.allergens, traces=body.traces,
                    category=body.category or (food.category if food else None), is_pet_food=body.is_pet_food,
                    pet_profile_id=body.pet_profile_id, provenance=body.provenance, image_source=body.image_source,

@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from ..auth import Principal, audit, require
@@ -20,6 +20,11 @@ from .catalog import ProductIn, create_product, find_or_create_food, food_out, p
 from .common import get_owned, iso, sid
 
 router = APIRouter(prefix="/api/v1/pantry", tags=["pantry"])
+
+
+def not_health():
+    """Medicines and supplements live in the health cabinet (/health/cabinet), not the food pantry."""
+    return or_(PantryLot.product_id.is_(None), PantryLot.product_id.not_in(select(Product.id).where(Product.kind.in_(("supplement", "medicine")))))
 
 
 def lot_out(lot: PantryLot) -> dict:
@@ -59,7 +64,7 @@ def _threshold(product: Product | None, food: Food | None) -> float | None:
 def pantry(location: str | None = None, q: str | None = None, pet: bool = False, include_empty: bool = False,
            p: Principal = Depends(require("pantry:read")), db: Session = Depends(get_db)):
     """Stock grouped by product (or by food for unbranded items), earliest relevant date first."""
-    stmt = select(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.is_pet_food.is_(pet))
+    stmt = select(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.is_pet_food.is_(pet), not_health())
     if not include_empty:
         stmt = stmt.where(PantryLot.status == "active")
     if location:
@@ -109,7 +114,7 @@ def pantry(location: str | None = None, q: str | None = None, pet: bool = False,
 @router.get("/expiring")
 def expiring(days: int = Query(5, ge=0, le=60), p: Principal = Depends(require("pantry:read")), db: Session = Depends(get_db)):
     until = date.today() + timedelta(days=days)
-    lots = db.scalars(select(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.status == "active",
+    lots = db.scalars(select(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.status == "active", not_health(),
                                               ((PantryLot.use_by <= until) | (PantryLot.best_before <= until))))
     out = []
     for lot in lots:

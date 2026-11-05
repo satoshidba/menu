@@ -271,6 +271,8 @@ def record_consumption(body: ConsumptionIn, p: Principal = Depends(require("inta
             raise HTTPException(422, "Choose a cooked batch, food or product")
         if (product and product.is_pet_food) or (food and food.is_pet_food):
             raise HTTPException(422, "Pet food can't be logged as human intake")
+        if product and product.kind in ("supplement", "medicine"):
+            raise HTTPException(422, "Record medicines and supplements as doses (POST /api/v1/health/doses)")
         unit = canonical_unit(body.amount_unit)
         if unit is None:
             raise HTTPException(422, f"Unknown unit '{body.amount_unit}'")

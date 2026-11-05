@@ -20,6 +20,7 @@ from ..services.media import abs_media
 from ..services.stock import relevant_date
 from ..services.units import uk_display
 from .common import get_owned, iso, sid
+from .pantry import not_health
 from .planning import plan_out
 
 router = APIRouter(prefix="/api/v1", tags=["system"])
@@ -39,7 +40,7 @@ def today(p: Principal = Depends(require("pantry:read")), db: Session = Depends(
                                            MealPlan.date >= t).order_by(MealPlan.date, MealPlan.slot))
     soon_cut = t + timedelta(days=3)
     lots = list(db.scalars(select(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.status == "active",
-                                                   PantryLot.is_pet_food.is_(False),
+                                                   PantryLot.is_pet_food.is_(False), not_health(),
                                                    (PantryLot.use_by <= soon_cut) | (PantryLot.best_before <= soon_cut))))
     use_soon = []
     for lot in sorted(lots, key=lambda l: relevant_date(l)):
@@ -51,7 +52,10 @@ def today(p: Principal = Depends(require("pantry:read")), db: Session = Depends(
     # low stock: aggregate per product/food with a threshold
     low = []
     for model in (Product, Food):
-        for item in db.scalars(select(model).where(model.household_id == p.household_id, model.min_stock_base.is_not(None))):
+        q = select(model).where(model.household_id == p.household_id, model.min_stock_base.is_not(None))
+        if model is Product:
+            q = q.where(Product.kind.not_in(("supplement", "medicine")))
+        for item in db.scalars(q):
             col = PantryLot.product_id if model is Product else PantryLot.food_id
             have = db.scalar(select(func.coalesce(func.sum(PantryLot.quantity_base), 0)).where(col == item.id, PantryLot.status == "active"))
             if have <= item.min_stock_base:
@@ -69,9 +73,18 @@ def today(p: Principal = Depends(require("pantry:read")), db: Session = Depends(
     away_today = [absence_out(a, names) for a in absences_between(db, p.household_id, t, t + timedelta(days=1))]
     return {"date": iso(t), "next_meal": plan_out(db, nxt, with_requirements=True) if nxt else None, "use_soon": use_soon[:12],
             "away": away_today,
+            "health": _health_summary(db, p),
             "low_stock": low[:12], "ideas": ideas, "planned_this_week": planned,
             "counts": {"recipes": db.scalar(select(func.count()).select_from(Recipe).where(Recipe.household_id == p.household_id)),
                        "pantry_lots": db.scalar(select(func.count()).select_from(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.status == "active"))}}
+
+
+def _health_summary(db: Session, p: Principal) -> dict | None:
+    if not p.has("health:read"):
+        return None
+    from ..services.health import due_today
+    due = due_today(db, p.household_id, lambda person: p.can_read_person_intake(person, "health:read"))
+    return {"due": [d for d in due if d["remaining_today"] > 0], "given_today": sum(d["given_today"] for d in due)}
 
 
 @router.get("/prices/history")

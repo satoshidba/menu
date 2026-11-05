@@ -33,6 +33,8 @@ ALL_SCOPES = {
     "intake:read:children": "Also read intake for listed child profiles",
     "intake:write": "Record meals eaten",
     "export:read": "Download a full household export",
+    "health:read": "Read the medicine & vitamin cabinet and dose logs for the listed people",
+    "health:write": "Record doses and manage medicines, vitamins and supplements",
 }
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
@@ -84,10 +86,12 @@ class Principal:
     def has(self, scope: str) -> bool:
         return self.is_user or scope in self.scopes
 
-    def can_read_person_intake(self, person: PersonProfile) -> bool:
+    def can_read_person_intake(self, person: PersonProfile, scope: str = "intake:read") -> bool:
+        """Intake (or, with scope="health:read", dose logs) for a person: listed on the token, and children only
+        with the explicit intake:read:children scope."""
         if self.is_user:
             return True
-        if "intake:read" not in self.scopes or self.token is None:
+        if scope not in self.scopes or self.token is None:
             return False
         if person.id not in (self.token.person_ids or []):
             return False

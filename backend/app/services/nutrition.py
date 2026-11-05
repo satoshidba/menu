@@ -26,6 +26,12 @@ NUTRIENTS: dict[str, tuple[str, str, bool]] = {
     "potassium_mg": ("Potassium", "mg", False),
     "vitamin_c_mg": ("Vitamin C", "mg", False),
     "vitamin_d_ug": ("Vitamin D", "µg", False),
+    "vitamin_a_ug": ("Vitamin A", "µg", False),
+    "vitamin_b12_ug": ("Vitamin B12", "µg", False),
+    "folate_ug": ("Folate / folic acid", "µg", False),
+    "zinc_mg": ("Zinc", "mg", False),
+    "iodine_ug": ("Iodine", "µg", False),
+    "omega3_mg": ("Omega-3 (EPA+DHA)", "mg", False),
 }
 CORE_NUTRIENTS = [k for k, v in NUTRIENTS.items() if v[2]]
 KJ_PER_KCAL = 4.184

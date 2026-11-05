@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import DBAPIError
 
 from . import models  # noqa: F401
-from .api import accounts, catalog, meals, pantry, planning, receipts, recipes, system
+from .api import accounts, catalog, health, meals, pantry, planning, receipts, recipes, system
 from .api.common import IdempotencyMiddleware
 from .services import receipts as _receipt_jobs  # noqa: F401  (registers job handlers)
 from .services import recipe_jobs as _recipe_jobs  # noqa: F401
@@ -59,5 +59,5 @@ async def validation_error(request: Request, exc: RequestValidationError):
     return JSONResponse({"detail": "Please check the highlighted fields.", "errors": errors}, 422)
 
 
-for r in (accounts, catalog, pantry, recipes, receipts, planning, meals, system):
+for r in (accounts, catalog, pantry, recipes, receipts, planning, meals, health, system):
     app.include_router(r.router)

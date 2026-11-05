@@ -178,6 +178,8 @@ def build_version(db: Session, recipe: Recipe, content: RecipeContent, *, househ
                 raise HTTPException(422, f"Unknown product for ingredient '{ing.name}'")
             if product.is_pet_food:
                 raise HTTPException(422, "Pet food cannot be used in a human recipe")
+            if product.kind == "medicine":
+                raise HTTPException(422, "Medicines can't be recipe ingredients")
         norm = _normalise_ingredient(db, ing, food)
         db.add(RecipeIngredient(
             version_id=v.id, position=i, section=ing.section, original_text=ing.original_text or ing.name, name=ing.name,

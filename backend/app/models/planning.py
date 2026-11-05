@@ -7,7 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, IdMixin, TimestampMixin
 
-__all__ = ["MealPlan", "CookedBatch", "MealConsumption", "ShoppingListItem", "Absence", "MEAL_SLOTS", "ABSENCE_REASONS"]
+__all__ = ["MealPlan", "CookedBatch", "MealConsumption", "ShoppingListItem", "Absence", "Regimen", "DoseLog", "MEAL_SLOTS",
+           "ABSENCE_REASONS"]
 
 MEAL_SLOTS = ("breakfast", "lunch", "dinner", "snack")
 
@@ -124,3 +125,44 @@ class Absence(IdMixin, TimestampMixin, Base):
 
     def covers(self, d: date, slot: str) -> bool:
         return self.start_date <= d <= self.end_date and (not self.slots or slot in self.slots)
+
+
+class Regimen(IdMixin, TimestampMixin, Base):
+    """A person's routine for a supplement or medicine, as told to the household (label, GP, pharmacist).
+
+    `times_per_day` drives the "due today" checklist; it is a reminder of what was entered, not dosing advice.
+    """
+
+    __tablename__ = "regimen"
+    household_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("household.id", ondelete="CASCADE"), index=True)
+    person_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("person_profile.id", ondelete="CASCADE"), index=True)
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("product.id", ondelete="CASCADE"))
+    dose_amount: Mapped[float] = mapped_column(Float, default=1)
+    dose_unit: Mapped[str] = mapped_column(String(16))
+    times_per_day: Mapped[int] = mapped_column(default=1)
+    as_needed: Mapped[bool] = mapped_column(Boolean, default=False)  # e.g. pain relief: no "due" reminders
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
+    instructions: Mapped[str | None] = mapped_column(Text)  # as written by the prescriber / on the label
+    source: Mapped[str | None] = mapped_column(String(120))  # e.g. "GP, 3 Nov", "Label", "Health visitor"
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class DoseLog(IdMixin, TimestampMixin, Base):
+    """A dose actually given/taken. Supplements also get a MealConsumption snapshot so they appear in intake."""
+
+    __tablename__ = "dose_log"
+    __table_args__ = (Index("ix_dose_person_time", "person_id", "given_at"),)
+    household_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("household.id", ondelete="CASCADE"), index=True)
+    person_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("person_profile.id", ondelete="CASCADE"))
+    product_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("product.id", ondelete="SET NULL"))
+    regimen_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("regimen.id", ondelete="SET NULL"))
+    consumption_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("meal_consumption.id", ondelete="SET NULL"))
+    description: Mapped[str] = mapped_column(String(200))
+    amount: Mapped[float] = mapped_column(Float)
+    unit: Mapped[str] = mapped_column(String(16))
+    given_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    given_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("user_account.id", ondelete="SET NULL"))
+    warnings_acknowledged: Mapped[list] = mapped_column(JSONB, default=list)
+    notes: Mapped[str | None] = mapped_column(Text)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

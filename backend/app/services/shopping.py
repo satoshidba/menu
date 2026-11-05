@@ -79,9 +79,19 @@ def generate(db: Session, household_id: uuid.UUID, start: date | None = None, en
             low[food.id] = {"food": food, "reason": f"Low stock: {uk_display(have, food.default_unit)} left "
                                                     f"(minimum {uk_display(food.min_stock_base, food.default_unit)})"}
 
+    # Medicines and supplements with a minimum (no generic food behind them)
+    low_products: dict[uuid.UUID, dict] = {}
+    for prod in db.scalars(select(Product).where(Product.household_id == household_id, Product.kind.in_(("supplement", "medicine")),
+                                                 Product.min_stock_base.is_not(None))):
+        lots = usable_lots(db, household_id, product_id=prod.id, include_pet=True)
+        have = sum(l.quantity_base for l in lots)
+        if have <= prod.min_stock_base:
+            low_products[prod.id] = {"product": prod, "reason": f"Running low: {uk_display(have, prod.base_unit)} left "
+                                                                f"(minimum {uk_display(prod.min_stock_base, prod.base_unit)})"}
+
     existing = list(db.scalars(select(ShoppingListItem).where(ShoppingListItem.household_id == household_id,
                                                               ShoppingListItem.origin.in_(("plan", "low_stock")))))
-    by_key = {(i.origin, i.food_id): i for i in existing}
+    by_key = {(i.origin, i.food_id or i.product_id): i for i in existing}
     touched = set()
     for fid, w in wanted.items():
         item = by_key.get(("plan", fid))
@@ -104,6 +114,15 @@ def generate(db: Session, household_id: uuid.UUID, start: date | None = None, en
             db.add(item)
         touched.add(("low_stock", fid))
         item.reason, item.aisle = l["reason"], l["food"].category
+    for pid, l in low_products.items():
+        item = by_key.get(("low_stock", pid))
+        if item is None:
+            prod = l["product"]
+            item = ShoppingListItem(household_id=household_id, product_id=pid, name=f"{prod.brand + ' ' if prod.brand else ''}{prod.name}",
+                                    origin="low_stock", aisle="Medicines & vitamins")
+            db.add(item)
+        touched.add(("low_stock", pid))
+        item.reason = l["reason"]
     # Remove generated rows that are no longer needed (unless the user ticked/edited them).
     for key, item in by_key.items():
         if key not in touched and not item.checked and not item.user_edited:

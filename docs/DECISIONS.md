@@ -170,3 +170,15 @@ maximum doses in 24 hours, ingredients, free-text directions) and never calculat
 
 **Scopes.** Health data has its own scopes (`health:read`, `health:write`). Doses follow the same per-person and
 explicit-children rules as intake. The MCP agent preset includes the health scopes, which can be unticked.
+
+### ADR-022 — Recurring absences and a calendar feed
+Absences can repeat weekly on chosen weekdays, from a start date until an optional end date. Each day is checked with
+`Absence.covers`, so planning defaults, conflicts and Today work the same for one-off and recurring absences. The plan
+API also returns `away_by_date`, so clients don't have to expand repeats themselves.
+
+`GET /api/v1/calendar.ics?token=…` is an RFC 5545 feed of planned meals (timed by slot) and absences. Absences become
+all-day or timed events, with `RRULE`s for multi-day and weekly ones. Calendar apps can't send headers, so the feed
+uses a separate token with only the `calendar:read` scope, which can be revoked or rotated like any other.
+
+Tokens are redacted from all log lines. The feed never includes medicines or intake. It was validated with a
+third-party iCalendar parser, including expanding the weekly rule.

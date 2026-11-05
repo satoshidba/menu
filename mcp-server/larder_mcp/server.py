@@ -290,8 +290,10 @@ async def get_week_plan(ctx: Context, start_date: Annotated[str | None, Field(de
         "meals": [{"meal_id": m["id"], "date": m["date"], "meal": m["slot"], "title": m["title"], "servings": m["servings"],
                    "recipe_id": m["recipe_id"], "status": m["status"], "eating": [people.get(x, x) for x in m["participant_ids"]],
                    "away_conflicts": [f"{a['person_name']} ({a['reason']})" for a in m["away_conflicts"]]} for m in p["meals"]],
-        "absences": [{"absence_id": a["id"], "person": a["person_name"], "from": a["start_date"], "to": a["end_date"],
+        "absences": [{"absence_id": a["id"], "person": a["person_name"], "from": a["start_date"], "to": a["end_date"], "repeats": a.get("repeats"),
                       "meals": "all day" if a["all_day"] else a["slots"], "reason": a["reason"], "note": a["note"]} for a in p["absences"]],
+        "away_by_date": {d: [f"{a['person_name']} ({a['reason']}, {'all day' if a['all_day'] else ', '.join(a['slots'])})" for a in v]
+                         for d, v in p.get("away_by_date", {}).items()},
     }
 
 
@@ -644,18 +646,23 @@ async def plan_without_absent(ctx: Context, meal_id: str) -> dict:
     return {"changed": r["changed"], "removed": r["removed"], "servings": r["meal"]["servings"]}
 
 
+WEEKDAY = Literal["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
 @mcp.tool(annotations=WRITE)
 async def mark_away(ctx: Context, person: str, start_date: str, end_date: str | None = None,
                     meals: Annotated[list[MEALS] | None, Field(description="Meals missed; omit for all day")] = None,
-                    reason: Literal["social", "work", "study", "travel", "other"] = "other", note: str | None = None) -> dict:
-    """Mark someone as out (e.g. socialising, work, study) for meals between two dates. Returns planned meals that
-    still include them; ask the user, then use plan_without_absent for each."""
+                    reason: Literal["social", "work", "study", "travel", "other"] = "other", note: str | None = None,
+                    every_weekday: Annotated[list[WEEKDAY] | None, Field(description="Repeat weekly on these days (e.g. ['Tue'] for a weekly class); end_date then optional")] = None) -> dict:
+    """Mark someone as out (e.g. socialising, work, study) for meals between two dates, or every week on given days.
+    Returns planned meals that still include them; ask the user, then use plan_without_absent for each."""
     c = client(ctx)
     p = await resolve_person(c, person)
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     r = await c.post("/absences", {"person_id": p["id"], "start_date": start_date, "end_date": end_date, "slots": meals or [],
-                                   "reason": reason, "note": note})
+                                   "reason": reason, "note": note, "weekdays": [days.index(d) for d in every_weekday or []]})
     a = r["absence"]
-    return {"absence_id": a["id"], "person": a["person_name"], "from": a["start_date"], "to": a["end_date"],
+    return {"absence_id": a["id"], "person": a["person_name"], "from": a["start_date"], "to": a["end_date"], "repeats": a.get("repeats"),
             "meals": "all day" if a["all_day"] else a["slots"], "affected_planned_meals": r["affected_meals"]}
 
 

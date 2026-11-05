@@ -37,7 +37,7 @@
 - An offline edit queue (IndexedDB) with visible sync and conflict resolution using `row_version` and `updated_at`.
 - Better toddler flags: age-aware salt guidance links, and choking-hazard preparation prompts in cooking mode.
 - A merge-foods tool and alias management.
-- Absences: recurring patterns (e.g. "every Tuesday evening, study") and iCal export/import.
+- Absences: iCal *import* (export and weekly repeats are done).
 
 ## Release 3 — optional integrations
 - Retailer-specific receipt parsers for Sainsbury's and Tesco PDF e-receipts, Lidl Plus and M&S Sparks.

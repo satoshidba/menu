@@ -1,5 +1,6 @@
 """FastAPI application: JSON API under /api/v1 (OpenAPI at /api/docs). The PWA is served by Caddy."""
 import logging
+import re
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -7,13 +8,30 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import DBAPIError
 
 from . import models  # noqa: F401
-from .api import accounts, catalog, health, meals, pantry, planning, receipts, recipes, system
+from .api import accounts, calendar, catalog, health, meals, pantry, planning, receipts, recipes, system
 from .api.common import IdempotencyMiddleware
 from .services import receipts as _receipt_jobs  # noqa: F401  (registers job handlers)
 from .services import recipe_jobs as _recipe_jobs  # noqa: F401
 from .worker import register_handlers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+
+
+class RedactTokens(logging.Filter):
+    """Calendar feeds carry a token in the URL; never write tokens to logs."""
+
+    pattern = re.compile(r"lrd_[A-Za-z0-9_\-]+")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.args:
+            record.args = tuple(self.pattern.sub("lrd_[redacted]", a) if isinstance(a, str) else a for a in record.args)
+        if isinstance(record.msg, str):
+            record.msg = self.pattern.sub("lrd_[redacted]", record.msg)
+        return True
+
+
+for _name in ("uvicorn.access", "uvicorn.error", "larder", "httpx"):
+    logging.getLogger(_name).addFilter(RedactTokens())
 register_handlers()
 
 app = FastAPI(
@@ -59,5 +77,5 @@ async def validation_error(request: Request, exc: RequestValidationError):
     return JSONResponse({"detail": "Please check the highlighted fields.", "errors": errors}, 422)
 
 
-for r in (accounts, catalog, pantry, recipes, receipts, planning, meals, health, system):
+for r in (accounts, catalog, pantry, recipes, receipts, planning, meals, health, calendar, system):
     app.include_router(r.router)

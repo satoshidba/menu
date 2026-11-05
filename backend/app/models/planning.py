@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -110,21 +110,33 @@ ABSENCE_REASONS = ("social", "work", "study", "travel", "other")
 
 
 class Absence(IdMixin, TimestampMixin, Base):
-    """A person away for some meals between two dates (inclusive). `slots` empty = away for the whole day."""
+    """A person away for some meals between two dates (inclusive). `slots` empty = away for the whole day.
+
+    With `weekdays` set (0 = Monday … 6 = Sunday) it repeats weekly on those days from `start_date`, until `end_date`
+    or indefinitely when `end_date` is null (e.g. "evening class every Tuesday").
+    """
 
     __tablename__ = "absence"
     __table_args__ = (Index("ix_absence_range", "household_id", "start_date", "end_date"),)
     household_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("household.id", ondelete="CASCADE"))
     person_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("person_profile.id", ondelete="CASCADE"), index=True)
     start_date: Mapped[date] = mapped_column(Date)
-    end_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date | None] = mapped_column(Date)
     slots: Mapped[list[str]] = mapped_column(ARRAY(String(16)), default=list)  # e.g. ["dinner"]; [] = all meals
+    weekdays: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list, server_default="{}")
     reason: Mapped[str] = mapped_column(String(16), default="other")
     note: Mapped[str | None] = mapped_column(String(200))
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("user_account.id", ondelete="SET NULL"))
 
     def covers(self, d: date, slot: str) -> bool:
-        return self.start_date <= d <= self.end_date and (not self.slots or slot in self.slots)
+        if d < self.start_date or (self.end_date is not None and d > self.end_date):
+            return False
+        if self.weekdays and d.weekday() not in self.weekdays:
+            return False
+        return not self.slots or slot in self.slots
+
+    def covers_day(self, d: date) -> bool:
+        return self.covers(d, self.slots[0] if self.slots else "dinner")
 
 
 class Regimen(IdMixin, TimestampMixin, Base):

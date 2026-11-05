@@ -8,12 +8,15 @@ import { addDays, fmtDay, isoToday, mondayOf, servings as fmtServings } from "..
 const SLOTS = ["breakfast", "lunch", "dinner", "snack"];
 export const REASONS: Record<string, string> = { social: "Socialising", work: "Work", study: "Study", travel: "Away", other: "Out" };
 
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export function covers(a: any, d: string, slot: string) {
-  return a.start_date <= d && d <= a.end_date && (a.all_day || a.slots.includes(slot));
+  if (d < a.start_date || (a.end_date && d > a.end_date)) return false;
+  if (a.weekdays?.length) { const wd = (new Date(d + "T12:00:00").getDay() + 6) % 7; if (!a.weekdays.includes(wd)) return false; }
+  return a.all_day || a.slots.includes(slot);
 }
 export function awayLabel(a: any) {
   const when = a.all_day ? "all day" : a.slots.join(", ");
-  return `${a.person_name} · ${REASONS[a.reason] || a.reason} · ${when}`;
+  return `${a.person_name} · ${REASONS[a.reason] || a.reason} · ${when}${a.repeats ? ` (${a.repeats})` : ""}`;
 }
 const portionsFor = (ps: any[]) => Math.max(0.5, Math.round(ps.reduce((s, p) => s + (p.default_portion || 1), 0) * 2) / 2);
 
@@ -56,7 +59,7 @@ export default function Plan() {
       <ol className="list" style={{ listStyle: "none" }}>
         {days.map((d) => {
           const dm = meals.filter((m) => m.date === d);
-          const away = absences.filter((a) => a.start_date <= d && d <= a.end_date);
+          const away = (data?.away_by_date?.[d] || []) as any[];
           return (
             <li key={d} style={{ padding: "12px 0", background: d === today ? "color-mix(in srgb, var(--herb-tint) 45%, transparent)" : undefined }}>
               <div className="plan-day">
@@ -114,8 +117,8 @@ export function AbsenceSheet({ value, people, onClose, onSaved }: { value: any; 
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
   useEffect(() => {
-    if (value) setF({ person_id: value.person_id || people[0]?.id, start_date: value.start_date, end_date: value.end_date || value.start_date,
-      slots: value.slots || ["dinner"], reason: value.reason || "social", note: value.note || "" });
+    if (value) setF({ person_id: value.person_id || people[0]?.id, start_date: value.start_date, end_date: value.end_date || (value.weekdays?.length ? "" : value.start_date),
+      slots: value.slots || ["dinner"], reason: value.reason || "social", note: value.note || "", weekdays: value.weekdays || [] });
     setAffected(null); setError(null);
   }, [value, people]);
   if (!value || !f) return null;
@@ -126,7 +129,7 @@ export function AbsenceSheet({ value, people, onClose, onSaved }: { value: any; 
   async function save() {
     setError(null);
     try {
-      const body = { ...f, end_date: f.end_date || f.start_date, note: f.note || null };
+      const body = { ...f, end_date: f.end_date || (f.weekdays.length ? null : f.start_date), note: f.note || null };
       const r = value.id ? await api(`/absences/${value.id}`, { method: "PATCH", body }) : await api("/absences", { body });
       if (r.affected_meals.length) setAffected(r.affected_meals);
       else { toast(`${person?.name} marked as out`); onSaved(); }
@@ -156,9 +159,13 @@ export function AbsenceSheet({ value, people, onClose, onSaved }: { value: any; 
             <div className="eyebrow" style={{ marginBottom: 8 }}>Who</div>
             <div className="row-wrap">{people.map((p) => <button key={p.id} className="chip" aria-pressed={p.id === f.person_id} onClick={() => setF({ ...f, person_id: p.id })}>{p.name}</button>)}</div>
           </div>
+          <div>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Repeats every week on (optional)</div>
+            <div className="row-wrap">{WEEKDAYS.map((w, i) => { const on = f.weekdays.includes(i); return <button key={w} className="chip" aria-pressed={on} onClick={() => setF({ ...f, weekdays: on ? f.weekdays.filter((x: number) => x !== i) : [...f.weekdays, i], end_date: !on && f.end_date === f.start_date ? "" : f.end_date })}>{w}</button>; })}</div>
+          </div>
           <div className="grid-2">
-            <Field label="From"><input className="input" type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value, end_date: f.end_date < e.target.value ? e.target.value : f.end_date })} /></Field>
-            <Field label="Until (inclusive)"><input className="input" type="date" min={f.start_date} value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></Field>
+            <Field label={f.weekdays.length ? "Starting" : "From"}><input className="input" type="date" value={f.start_date} onChange={(e) => setF({ ...f, start_date: e.target.value, end_date: f.end_date && f.end_date < e.target.value ? e.target.value : f.end_date })} /></Field>
+            <Field label={f.weekdays.length ? "Until (leave empty to keep going)" : "Until (inclusive)"}><input className="input" type="date" min={f.start_date} value={f.end_date} onChange={(e) => setF({ ...f, end_date: e.target.value })} /></Field>
           </div>
           <div>
             <div className="eyebrow" style={{ marginBottom: 8 }}>Missing</div>

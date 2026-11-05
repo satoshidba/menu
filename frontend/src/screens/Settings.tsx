@@ -146,11 +146,19 @@ function Tokens() {
         <div className="row-wrap">
           <button className="btn small" onClick={() => setForm({ name: "AI agent (MCP)", agent: true, person_ids: (people.data || []).filter((p) => p.kind === "adult").map((p) => p.id),
             scopes: ["recipes:read", "recipes:write", "pantry:read", "pantry:write", "plan:read", "plan:write", "receipts:write", "intake:read", "intake:write", "health:read", "health:write"] })}><Icon name="idea" size={16} />AI agent</button>
+          <button className="btn small" onClick={async () => { try { setCreated(await api("/tokens", { body: { name: "Calendar feed", scopes: ["calendar:read"], person_ids: [] } })); reload(); } catch (e) { setError(errorText(e)); } }}><Icon name="plan" size={16} />Calendar feed</button>
           <button className="btn small" onClick={() => setForm({ name: "Activity app", scopes: ["intake:read"], person_ids: [] })}><Icon name="plus" size={16} />New token</button>
         </div>
       </div>
       <p className="xsmall muted">Read-only tokens let another app poll intake via <code>/api/v1/people/&lt;id&gt;/intake/export?updated_since=…</code>. Children's intake is only shared with the explicit children scope.</p>
       {created && <Notice tone="warn">Copy this token now; it won't be shown again:<pre className="raw" style={{ userSelect: "all", margin: "6px 0 0", wordBreak: "break-all" }}>{created.token}</pre>
+        {created.scopes.includes("calendar:read") && (
+          <div className="small" style={{ marginTop: 8 }}>
+            Subscribe to meals and who's out in your phone's calendar (iPhone: tap the link; Google Calendar: “From URL”):
+            <pre className="raw" style={{ userSelect: "all", margin: "6px 0 0", wordBreak: "break-all" }}>{`webcal://${window.location.host}/api/v1/calendar.ics?token=${created.token}`}</pre>
+            Anyone with this link can see your meal plan and who's out, so share it carefully; revoke it here to stop it. Medicines and intake are never included.
+          </div>
+        )}
         {created.scopes.includes("plan:write") && (
           <div className="small" style={{ marginTop: 8 }}>
             To connect an AI agent over MCP, point it at <code>{window.location.origin}/mcp</code> and send the token as a bearer header. For example, in Claude Code:

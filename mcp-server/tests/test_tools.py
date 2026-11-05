@@ -84,6 +84,9 @@ async def test_plan_absence_and_shopping_round_trip(client):
         sl = await call(client, "get_shopping_list")
         assert any("Red lentil" in (i["why"] or "") for g in sl["groups"] for i in g["items"])
         await call(client, "remove_away", absence_id=away["absence_id"])
+        weekly = await call(client, "mark_away", person="Alex", start_date=d, every_weekday=["Tue"], meals=["dinner"], reason="study")
+        assert weekly["repeats"] == "every Tue" and weekly["to"] is None
+        await call(client, "remove_away", absence_id=weekly["absence_id"])
     finally:
         await call(client, "remove_planned_meal", meal_id=meal["meal_id"])
 

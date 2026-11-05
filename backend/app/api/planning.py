@@ -23,9 +23,27 @@ from .common import get_owned, iso, sid
 router = APIRouter(prefix="/api/v1", tags=["planning"])
 
 
+DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
 def absence_out(a: Absence, names: dict | None = None) -> dict:
+    repeats = None
+    if a.weekdays:
+        repeats = "every " + ", ".join(DAY_NAMES[d] for d in sorted(a.weekdays)) + (f" until {a.end_date:%d %b}" if a.end_date else "")
     return {"id": sid(a.id), "person_id": sid(a.person_id), "person_name": (names or {}).get(a.person_id), "start_date": iso(a.start_date),
-            "end_date": iso(a.end_date), "slots": a.slots or [], "all_day": not a.slots, "reason": a.reason, "note": a.note}
+            "end_date": iso(a.end_date), "slots": a.slots or [], "all_day": not a.slots, "reason": a.reason, "note": a.note,
+            "weekdays": sorted(a.weekdays or []), "repeats": repeats}
+
+
+def away_by_date(absences: list, start: date, end: date, names: dict) -> dict:
+    out: dict[str, list] = {}
+    d = start
+    while d <= end:
+        for a in absences:
+            if a.covers_day(d):
+                out.setdefault(d.isoformat(), []).append(absence_out(a, names))
+        d += timedelta(days=1)
+    return out
 
 
 def _names(db: Session, household_id) -> dict:
@@ -65,7 +83,7 @@ def get_plan(from_: date | None = Query(None, alias="from"), to: date | None = N
     absences = absences_between(db, p.household_id, start, end)
     names = _names(db, p.household_id)
     return {"from": iso(start), "to": iso(end), "meals": [plan_out(db, m, absences=absences, names=names) for m in rows],
-            "absences": [absence_out(a, names) for a in absences]}
+            "absences": [absence_out(a, names) for a in absences], "away_by_date": away_by_date(absences, start, end, names)}
 
 
 class PlanIn(BaseModel):
@@ -135,28 +153,33 @@ class AbsenceIn(BaseModel):
     start_date: date
     end_date: date | None = None
     slots: list[str] = Field([], description="Meals missed, e.g. ['dinner']; empty = all day")
+    weekdays: list[int] = Field([], description="Repeat weekly on these days (0 = Monday … 6 = Sunday); end_date may then be empty")
     reason: str = Field("other", description="social | work | study | travel | other")
     note: str | None = Field(None, max_length=200)
 
 
 def _check_absence(db: Session, p: Principal, body: AbsenceIn) -> dict:
     get_owned(db, PersonProfile, body.person_id, p.household_id, "Person")
-    end = body.end_date or body.start_date
-    if end < body.start_date:
+    if any(d < 0 or d > 6 for d in body.weekdays):
+        raise HTTPException(422, "Weekdays run from 0 (Monday) to 6 (Sunday)")
+    end = body.end_date if body.weekdays else (body.end_date or body.start_date)
+    if end is not None and end < body.start_date:
         raise HTTPException(422, "The end date is before the start date")
-    if (end - body.start_date).days > 366:
-        raise HTTPException(422, "Absences can be up to a year long")
+    if not body.weekdays and (end - body.start_date).days > 366:
+        raise HTTPException(422, "One-off absences can be up to a year long; use a weekly repeat for regular commitments")
     bad = set(body.slots) - {"breakfast", "lunch", "dinner", "snack"}
     if bad:
         raise HTTPException(422, f"Unknown meal: {', '.join(sorted(bad))}")
     if body.reason not in ABSENCE_REASONS:
         raise HTTPException(422, f"Reason should be one of: {', '.join(ABSENCE_REASONS)}")
-    return {**body.model_dump(), "end_date": end, "slots": sorted(set(body.slots), key=["breakfast", "lunch", "dinner", "snack"].index)}
+    return {**body.model_dump(), "end_date": end, "weekdays": sorted(set(body.weekdays)),
+            "slots": sorted(set(body.slots), key=["breakfast", "lunch", "dinner", "snack"].index)}
 
 
 def _affected(db: Session, household_id, a: Absence) -> list[dict]:
+    last = a.end_date or a.start_date + timedelta(days=120)
     rows = db.scalars(select(MealPlan).where(MealPlan.household_id == household_id, MealPlan.status == "planned",
-                                             MealPlan.date >= a.start_date, MealPlan.date <= a.end_date))
+                                             MealPlan.date >= a.start_date, MealPlan.date <= last))
     return [{"id": sid(m.id), "date": iso(m.date), "slot": m.slot, "title": m.title, "servings": m.servings}
             for m in rows if a.covers(m.date, m.slot) and a.person_id in (m.participant_ids or [])]
 

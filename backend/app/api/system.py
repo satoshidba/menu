@@ -70,7 +70,8 @@ def today(p: Principal = Depends(require("pantry:read")), db: Session = Depends(
     from ..services.absences import absences_between
     from .planning import _names, absence_out
     names = _names(db, p.household_id)
-    away_today = [absence_out(a, names) for a in absences_between(db, p.household_id, t, t + timedelta(days=1))]
+    away_today = [{**absence_out(a, names), "date": iso(d)} for d in (t, t + timedelta(days=1))
+                  for a in absences_between(db, p.household_id, d, d) if a.covers_day(d)]
     return {"date": iso(t), "next_meal": plan_out(db, nxt, with_requirements=True) if nxt else None, "use_soon": use_soon[:12],
             "away": away_today,
             "health": _health_summary(db, p),

@@ -239,8 +239,8 @@ def seed_demo() -> dict:
             db.add_all([
                 Absence(household_id=hid, person_id=byname["Sam"].id, start_date=t + timedelta(days=1), end_date=t + timedelta(days=1),
                         slots=["dinner"], reason="social", note="Pub quiz"),
-                Absence(household_id=hid, person_id=byname["Alex"].id, start_date=t + timedelta(days=3), end_date=t + timedelta(days=3),
-                        slots=["dinner"], reason="study", note="Evening class"),
+                Absence(household_id=hid, person_id=byname["Alex"].id, start_date=t + timedelta(days=3), end_date=None,
+                        weekdays=[(t + timedelta(days=3)).weekday()], slots=["dinner"], reason="study", note="Evening class"),
                 Absence(household_id=hid, person_id=byname["Sam"].id, start_date=t + timedelta(days=5), end_date=t + timedelta(days=6),
                         slots=[], reason="work", note="Conference in Leeds"),
             ])

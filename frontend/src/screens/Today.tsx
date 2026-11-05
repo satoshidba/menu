@@ -95,7 +95,7 @@ export default function Today() {
 function AwayLine({ away }: { away: any[] }) {
   const t = isoToday();
   const parts = away.map((a) => {
-    const today = a.start_date <= t && t <= a.end_date;
+    const today = (a.date || a.start_date) === t;
     const day = today ? "today" : "tomorrow";
     const when = a.all_day ? `all day ${day}` : a.slots.length === 1 && a.slots[0] === "dinner" && today ? "tonight" : `for ${a.slots.join(" and ")} ${day}`;
     return `${a.person_name} is out ${when} (${(REASONS[a.reason] || a.reason).toLowerCase()}${a.note ? `: ${a.note}` : ""})`;

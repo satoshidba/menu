@@ -35,6 +35,7 @@ ALL_SCOPES = {
     "export:read": "Download a full household export",
     "health:read": "Read the medicine & vitamin cabinet and dose logs for the listed people",
     "health:write": "Record doses and manage medicines, vitamins and supplements",
+    "calendar:read": "Subscribe to the meal plan and who's-out calendar feed (token goes in the feed URL)",
 }
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 

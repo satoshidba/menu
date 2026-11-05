@@ -67,6 +67,11 @@ paste the text. Then review it like a ledger:
 - **Someone's out**: mark a person away for a day, several days, or particular meals, with a reason (socialising,
   work, study, away). If they were down for meals you'd already planned, Larder offers to **plan without them**, which
   reduces the servings and the shopping.
+- For regular commitments (an evening class, a weekly shift), pick the days under **Repeats every week on**. Leave
+  the end date empty to keep it going.
+- **Calendar feed**: in **Settings → Connected apps**, tap **Calendar feed** to get a link that shows planned meals and
+  who's out in your phone's calendar (it updates hourly). Anyone with the link can see the plan, so share it with care;
+  revoke it there to stop it. Medicines and nutrition are never included.
 - **Shopping list** = what the planned meals need minus what's usable in the pantry. Food past its use-by before the
   meal doesn't count. It updates when plans or stock change. You can pick a brand, set a shop, tick things off, snooze
   or dismiss items, and add your own.

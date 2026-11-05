@@ -6,7 +6,7 @@ but a planned meal's participants and servings only change when someone chooses 
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -15,8 +15,21 @@ from ..models import Absence, MealPlan, PersonProfile
 
 
 def absences_between(db: Session, household_id: uuid.UUID, start: date, end: date) -> list[Absence]:
-    return list(db.scalars(select(Absence).where(Absence.household_id == household_id, Absence.start_date <= end,
-                                                 Absence.end_date >= start).order_by(Absence.start_date)))
+    rows = db.scalars(select(Absence).where(Absence.household_id == household_id, Absence.start_date <= end,
+                                            (Absence.end_date.is_(None)) | (Absence.end_date >= start)).order_by(Absence.start_date))
+    # recurring absences only count if one of their weekdays falls in the range
+    out = []
+    for a in rows:
+        if not a.weekdays:
+            out.append(a)
+            continue
+        d, last = max(start, a.start_date), min(end, a.end_date or end)
+        while d <= last:
+            if d.weekday() in a.weekdays:
+                out.append(a)
+                break
+            d += timedelta(days=1)
+    return out
 
 
 def away_ids(absences: list[Absence], d: date, slot: str) -> set[uuid.UUID]:

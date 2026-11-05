@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.4-alpine
+        env:
+          POSTGRES_USER: larder
+          POSTGRES_PASSWORD: larder
+          POSTGRES_DB: larder_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U larder" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      LARDER_TEST_DATABASE_URL: postgresql+psycopg://larder:larder@localhost:5432/larder_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: System packages (OCR, PDF text, pg_dump 16)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng poppler-utils postgresql-client-16
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r backend/requirements-dev.txt
+      - name: Migrations have no drift
+        working-directory: backend
+        env:
+          LARDER_DATABASE_URL: ${{ env.LARDER_TEST_DATABASE_URL }}
+        run: alembic upgrade head && alembic check && alembic downgrade base && alembic upgrade head
+      - name: Tests
+        working-directory: backend
+        run: PATH=/usr/lib/postgresql/16/bin:$PATH python -m pytest -q
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - working-directory: frontend
+        run: npm ci && npm run build
+
+  mcp:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.4-alpine
+        env:
+          POSTGRES_USER: larder
+          POSTGRES_PASSWORD: larder
+          POSTGRES_DB: larder
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U larder" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      LARDER_DATABASE_URL: postgresql+psycopg://larder:larder@localhost:5432/larder
+      LARDER_DATA_DIR: /tmp/larder-data
+      LARDER_COOKIE_SECURE: "false"
+      LARDER_INLINE_JOBS: "true"
+      LARDER_OFF_ENABLED: "false"
+      LARDER_DEMO_PASSWORD: ci-demo-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt ./mcp-server pytest anyio
+      - name: Start a seeded Larder API
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python -m app.cli seed-demo
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/v1/health && break; sleep 1; done
+      - name: MCP end-to-end tests
+        run: |
+          export LARDER_URL=http://127.0.0.1:8000
+          export LARDER_TOKEN=$(python tools/ci_mcp_token.py "$LARDER_URL" alex@example.com "$LARDER_DEMO_PASSWORD")
+          python -m pytest -q mcp-server/tests
+      - if: failure()
+        run: cat /tmp/api.log

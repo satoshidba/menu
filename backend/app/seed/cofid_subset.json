@@ -1,0 +1,1424 @@
+{
+ "dataset_version": "CoFID-2021",
+ "source": "McCance and Widdowson's Composition of Foods Integrated Dataset 2021, Crown copyright, Open Government Licence v3.0. Subset extracted unmodified for offline setup.",
+ "source_url": "https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid",
+ "foods": {
+  "11-716": {
+   "name": "Pasta, white, dried, raw",
+   "description": "12 samples, including penne, fusilli, conchiglie, tagliatelle, spaghetti",
+   "group": "AD",
+   "nutrients": {
+    "protein_g": 11.3,
+    "fat_g": 1.6,
+    "carbohydrate_g": 75.6,
+    "energy_kcal": 343.0,
+    "energy_kj": 1461.0,
+    "sugars_g": 2.1,
+    "fibre_g": null,
+    "saturates_g": 0.23,
+    "sodium_mg": 2.0,
+    "potassium_mg": 232.0,
+    "calcium_mg": 24.0,
+    "iron_mg": 1.59,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "13-499": {
+   "name": "Onions, raw",
+   "description": "22 samples, autumn and winter, UK grown and imported, pre-packed and loose",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 1.0,
+    "fat_g": 0.1,
+    "carbohydrate_g": 8.0,
+    "energy_kcal": 35.0,
+    "energy_kj": 150.0,
+    "sugars_g": 6.2,
+    "fibre_g": 2.2,
+    "saturates_g": 0.0,
+    "sodium_mg": 3.0,
+    "potassium_mg": 138.0,
+    "calcium_mg": 30.0,
+    "iron_mg": 0.3,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 3.0
+   },
+   "flags": {
+    "saturates_g": "trace"
+   }
+  },
+  "13-244": {
+   "name": "Garlic, raw",
+   "description": "Peeled cloves",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 7.9,
+    "fat_g": 0.6,
+    "carbohydrate_g": 16.3,
+    "energy_kcal": 98.0,
+    "energy_kj": 411.0,
+    "sugars_g": 1.6,
+    "fibre_g": null,
+    "saturates_g": 0.1,
+    "sodium_mg": 4.0,
+    "potassium_mg": 620.0,
+    "calcium_mg": 19.0,
+    "iron_mg": 1.9,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 17.0
+   },
+   "flags": {}
+  },
+  "13-530": {
+   "name": "Tomatoes, canned, whole contents",
+   "description": "12 samples, 9 brands, whole and chopped, no added salt",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 1.1,
+    "fat_g": 0.1,
+    "carbohydrate_g": 3.8,
+    "energy_kcal": 19.0,
+    "energy_kj": 80.0,
+    "sugars_g": 3.8,
+    "fibre_g": 0.8,
+    "saturates_g": 0.01,
+    "sodium_mg": 5.0,
+    "potassium_mg": 212.0,
+    "calcium_mg": 11.0,
+    "iron_mg": 0.57,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 11.0
+   },
+   "flags": {}
+  },
+  "13-517": {
+   "name": "Tomatoes, standard, raw",
+   "description": "22 samples, autumn and winter, UK grown and imported, 'on the vine' and loose",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 0.5,
+    "fat_g": 0.1,
+    "carbohydrate_g": 3.0,
+    "energy_kcal": 14.0,
+    "energy_kj": 61.0,
+    "sugars_g": 3.0,
+    "fibre_g": 1.0,
+    "saturates_g": 0.03,
+    "sodium_mg": 2.0,
+    "potassium_mg": 223.0,
+    "calcium_mg": 8.0,
+    "iron_mg": 0.24,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 22.0
+   },
+   "flags": {}
+  },
+  "13-572": {
+   "name": "Spinach, mature, raw",
+   "description": "Ribs and stems removed",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 2.8,
+    "fat_g": 0.8,
+    "carbohydrate_g": 1.6,
+    "energy_kcal": 25.0,
+    "energy_kj": 103.0,
+    "sugars_g": 1.5,
+    "fibre_g": null,
+    "saturates_g": 0.1,
+    "sodium_mg": 140.0,
+    "potassium_mg": 500.0,
+    "calcium_mg": 170.0,
+    "iron_mg": 2.1,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 26.0
+   },
+   "flags": {}
+  },
+  "18-290": {
+   "name": "Chicken, light meat, raw",
+   "description": "31 samples, fresh and frozen",
+   "group": "MCA",
+   "nutrients": {
+    "protein_g": 24.0,
+    "fat_g": 1.1,
+    "carbohydrate_g": 0.0,
+    "energy_kcal": 106.0,
+    "energy_kj": 449.0,
+    "sugars_g": 0.0,
+    "fibre_g": 0.0,
+    "saturates_g": 0.3,
+    "sodium_mg": 60.0,
+    "potassium_mg": 370.0,
+    "calcium_mg": 5.0,
+    "iron_mg": 0.5,
+    "vitamin_d_ug": 0.2,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "17-038": {
+   "name": "Oil, olive",
+   "description": "Mean of 35 samples; including virgin and extra virgin olive oil",
+   "group": "OC",
+   "nutrients": {
+    "protein_g": 0.0,
+    "fat_g": 99.9,
+    "carbohydrate_g": 0.0,
+    "energy_kcal": 899.0,
+    "energy_kj": 3696.0,
+    "sugars_g": 0.0,
+    "fibre_g": 0.0,
+    "saturates_g": 14.3,
+    "sodium_mg": 0.0,
+    "potassium_mg": 0.0,
+    "calcium_mg": 0.0,
+    "iron_mg": 0.4,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "protein_g": "trace",
+    "sodium_mg": "trace",
+    "potassium_mg": "trace",
+    "calcium_mg": "trace"
+   }
+  },
+  "17-685": {
+   "name": "Butter, salted",
+   "description": "Average of UK/Irish, Danish, French, New Zealand",
+   "group": "OA",
+   "nutrients": {
+    "protein_g": 0.6,
+    "fat_g": 82.2,
+    "carbohydrate_g": 0.6,
+    "energy_kcal": 744.0,
+    "energy_kj": 3059.0,
+    "sugars_g": 0.6,
+    "fibre_g": 0.0,
+    "saturates_g": 52.09,
+    "sodium_mg": 730.0,
+    "potassium_mg": 27.0,
+    "calcium_mg": 18.0,
+    "iron_mg": 0.0,
+    "vitamin_d_ug": 0.9,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "iron_mg": "trace",
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "12-313": {
+   "name": "Milk, semi-skimmed, pasteurised, average",
+   "description": "Average of summer/autumn and winter/spring milk. Samples from 11 areas, in glass bottles (50%), plastic containers (30%) and cartons (20%)",
+   "group": "BAH",
+   "nutrients": {
+    "protein_g": 3.5,
+    "fat_g": 1.7,
+    "carbohydrate_g": 4.7,
+    "energy_kcal": 46.0,
+    "energy_kj": 195.0,
+    "sugars_g": 4.7,
+    "fibre_g": 0.0,
+    "saturates_g": 1.07,
+    "sodium_mg": 43.0,
+    "potassium_mg": 156.0,
+    "calcium_mg": 120.0,
+    "iron_mg": 0.02,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 2.0
+   },
+   "flags": {
+    "vitamin_d_ug": "trace"
+   }
+  },
+  "12-346": {
+   "name": "Cheese, Cheddar, English",
+   "description": "20 samples of English cheddar, including mild and mature, spring and autumn",
+   "group": "BL",
+   "nutrients": {
+    "protein_g": 25.4,
+    "fat_g": 34.9,
+    "carbohydrate_g": 0.1,
+    "energy_kcal": 416.0,
+    "energy_kj": 1725.0,
+    "sugars_g": 0.1,
+    "fibre_g": 0.0,
+    "saturates_g": 21.68,
+    "sodium_mg": 723.0,
+    "potassium_mg": 75.0,
+    "calcium_mg": 739.0,
+    "iron_mg": 0.3,
+    "vitamin_d_ug": 0.3,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "12-937": {
+   "name": "Eggs, chicken, whole, raw",
+   "description": "12 samples from 3 egg distribution centres, including enriched cage, barn, free-range and organic",
+   "group": "CA",
+   "nutrients": {
+    "protein_g": 12.6,
+    "fat_g": 9.0,
+    "carbohydrate_g": 0.0,
+    "energy_kcal": 131.0,
+    "energy_kj": 547.0,
+    "sugars_g": 0.0,
+    "fibre_g": 0.0,
+    "saturates_g": 2.52,
+    "sodium_mg": 154.0,
+    "potassium_mg": 145.0,
+    "calcium_mg": 46.0,
+    "iron_mg": 1.72,
+    "vitamin_d_ug": 3.2,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "carbohydrate_g": "trace",
+    "sugars_g": "trace"
+   }
+  },
+  "11-857": {
+   "name": "Rice, white, basmati, raw",
+   "description": "11 samples, 9 products",
+   "group": "AC",
+   "nutrients": {
+    "protein_g": 8.1,
+    "fat_g": 0.5,
+    "carbohydrate_g": 83.7,
+    "energy_kcal": 351.0,
+    "energy_kj": 1495.0,
+    "sugars_g": 0.1,
+    "fibre_g": 1.1,
+    "saturates_g": 0.14,
+    "sodium_mg": 1.0,
+    "potassium_mg": 77.0,
+    "calcium_mg": 10.0,
+    "iron_mg": 1.73,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "11-886": {
+   "name": "Flour, wheat, white, plain, soft",
+   "description": "14 samples, 12 products",
+   "group": "AA",
+   "nutrients": {
+    "protein_g": 9.1,
+    "fat_g": 1.4,
+    "carbohydrate_g": 80.9,
+    "energy_kcal": 352.0,
+    "energy_kj": 1501.0,
+    "sugars_g": 0.6,
+    "fibre_g": 4.0,
+    "saturates_g": 0.44,
+    "sodium_mg": 2.0,
+    "potassium_mg": 175.0,
+    "calcium_mg": 96.0,
+    "iron_mg": 1.94,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "17-063": {
+   "name": "Sugar, white",
+   "description": "Granulated and loaf sugar",
+   "group": "SC",
+   "nutrients": {
+    "protein_g": 0.0,
+    "fat_g": 0.0,
+    "carbohydrate_g": 105.0,
+    "energy_kcal": 394.0,
+    "energy_kj": 1680.0,
+    "sugars_g": 105.0,
+    "fibre_g": 0.0,
+    "saturates_g": 0.0,
+    "sodium_mg": 5.0,
+    "potassium_mg": 5.0,
+    "calcium_mg": 10.0,
+    "iron_mg": 0.2,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "protein_g": "trace"
+   }
+  },
+  "13-496": {
+   "name": "Carrots, old, raw",
+   "description": "22 samples, autumn and winter, UK grown, pre-packed and loose, top and tailed, peeled and not peeled",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 0.5,
+    "fat_g": 0.4,
+    "carbohydrate_g": 7.7,
+    "energy_kcal": 34.0,
+    "energy_kj": 146.0,
+    "sugars_g": 7.2,
+    "fibre_g": 3.9,
+    "saturates_g": 0.1,
+    "sodium_mg": 27.0,
+    "potassium_mg": 178.0,
+    "calcium_mg": 26.0,
+    "iron_mg": 0.23,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 2.0
+   },
+   "flags": {}
+  },
+  "13-489": {
+   "name": "Potatoes, old, raw, flesh only",
+   "description": "22 samples, autumn and winter, including white and red varieties, pre-packed and loose",
+   "group": "DAM",
+   "nutrients": {
+    "protein_g": 1.9,
+    "fat_g": 0.1,
+    "carbohydrate_g": 19.6,
+    "energy_kcal": 82.0,
+    "energy_kj": 349.0,
+    "sugars_g": 0.9,
+    "fibre_g": 2.0,
+    "saturates_g": 0.03,
+    "sodium_mg": 2.0,
+    "potassium_mg": 443.0,
+    "calcium_mg": 7.0,
+    "iron_mg": 0.32,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 14.0
+   },
+   "flags": {}
+  },
+  "13-657": {
+   "name": "Lentils, red, split, dried, raw",
+   "description": "10 samples, 10 products, as purchased",
+   "group": "DB",
+   "nutrients": {
+    "protein_g": 25.6,
+    "fat_g": 1.8,
+    "carbohydrate_g": 51.2,
+    "energy_kcal": 311.0,
+    "energy_kj": 1321.0,
+    "sugars_g": 1.3,
+    "fibre_g": 17.4,
+    "saturates_g": 0.28,
+    "sodium_mg": 0.0,
+    "potassium_mg": 717.0,
+    "calcium_mg": 33.0,
+    "iron_mg": 7.0,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "sodium_mg": "trace",
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "13-670": {
+   "name": "Beans, chick peas, canned, re-heated, drained",
+   "description": "Fibre only analysed. 10 samples, 7 products, whole peas, canned in water, no added salt. Heated for 3-5 minutes before draining",
+   "group": "DB",
+   "nutrients": {
+    "protein_g": 8.4,
+    "fat_g": 3.0,
+    "carbohydrate_g": 18.3,
+    "energy_kcal": 129.0,
+    "energy_kj": 547.0,
+    "sugars_g": 0.7,
+    "fibre_g": 7.1,
+    "saturates_g": 0.29,
+    "sodium_mg": 1.0,
+    "potassium_mg": 281.0,
+    "calcium_mg": 48.0,
+    "iron_mg": 1.9,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "14-318": {
+   "name": "Bananas, flesh only",
+   "description": "11 samples, including Fairtrade and organic, pre-packed and loose",
+   "group": "FA",
+   "nutrients": {
+    "protein_g": 1.2,
+    "fat_g": 0.1,
+    "carbohydrate_g": 20.3,
+    "energy_kcal": 81.0,
+    "energy_kj": 348.0,
+    "sugars_g": 18.1,
+    "fibre_g": 1.4,
+    "saturates_g": 0.04,
+    "sodium_mg": 0.0,
+    "potassium_mg": 330.0,
+    "calcium_mg": 6.0,
+    "iron_mg": 0.27,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 9.0
+   },
+   "flags": {
+    "sodium_mg": "trace"
+   }
+  },
+  "14-319": {
+   "name": "Apples, eating, raw, flesh and skin",
+   "description": "22 samples, autumn and winter, UK grown and imported, pre-packed and loose, including Gala, Braeburn, Golden Delicious, Pink Lady, Cox and Granny Smith",
+   "group": "FA",
+   "nutrients": {
+    "protein_g": 0.6,
+    "fat_g": 0.5,
+    "carbohydrate_g": 11.6,
+    "energy_kcal": 51.0,
+    "energy_kj": 215.0,
+    "sugars_g": 11.6,
+    "fibre_g": 1.2,
+    "saturates_g": 0.12,
+    "sodium_mg": 1.0,
+    "potassium_mg": 100.0,
+    "calcium_mg": 5.0,
+    "iron_mg": 0.09,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 6.0
+   },
+   "flags": {}
+  },
+  "13-524": {
+   "name": "Pepper, capsicum, red, raw",
+   "description": "22 samples, autumn and winter, UK grown and imported, pre-packed and loose",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 0.8,
+    "fat_g": 0.2,
+    "carbohydrate_g": 4.3,
+    "energy_kcal": 21.0,
+    "energy_kj": 89.0,
+    "sugars_g": 4.2,
+    "fibre_g": 2.2,
+    "saturates_g": 0.05,
+    "sodium_mg": 1.0,
+    "potassium_mg": 216.0,
+    "calcium_mg": 7.0,
+    "iron_mg": 0.39,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 126.0
+   },
+   "flags": {}
+  },
+  "13-502": {
+   "name": "Broccoli, green, raw",
+   "description": "22 samples, autumn and winter, UK grown and imported, pre-packed and loose, Calabrese",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 4.3,
+    "fat_g": 0.6,
+    "carbohydrate_g": 3.2,
+    "energy_kcal": 34.0,
+    "energy_kj": 146.0,
+    "sugars_g": 1.9,
+    "fibre_g": 4.0,
+    "saturates_g": 0.15,
+    "sodium_mg": 9.0,
+    "potassium_mg": 397.0,
+    "calcium_mg": 48.0,
+    "iron_mg": 1.06,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 79.0
+   },
+   "flags": {}
+  },
+  "18-469": {
+   "name": "Beef, mince, raw",
+   "description": "10 samples",
+   "group": "MAC",
+   "nutrients": {
+    "protein_g": 19.7,
+    "fat_g": 16.2,
+    "carbohydrate_g": 0.0,
+    "energy_kcal": 225.0,
+    "energy_kj": 934.0,
+    "sugars_g": 0.0,
+    "fibre_g": 0.0,
+    "saturates_g": 6.94,
+    "sodium_mg": 80.0,
+    "potassium_mg": 260.0,
+    "calcium_mg": 9.0,
+    "iron_mg": 1.4,
+    "vitamin_d_ug": 0.7,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "16-356": {
+   "name": "Salmon, farmed, flesh only, raw",
+   "description": "10 samples, fresh fillets",
+   "group": "J",
+   "nutrients": {
+    "protein_g": 20.4,
+    "fat_g": 15.0,
+    "carbohydrate_g": 0.0,
+    "energy_kcal": 217.0,
+    "energy_kj": 902.0,
+    "sugars_g": 0.0,
+    "fibre_g": 0.2,
+    "saturates_g": 2.77,
+    "sodium_mg": 43.0,
+    "potassium_mg": 357.0,
+    "calcium_mg": 10.0,
+    "iron_mg": 0.33,
+    "vitamin_d_ug": 4.7,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "12-555": {
+   "name": "Yogurt, Greek style, plain",
+   "description": "7 samples, 6 brands, made with whole milk",
+   "group": "BN",
+   "nutrients": {
+    "protein_g": 5.7,
+    "fat_g": 10.2,
+    "carbohydrate_g": 4.8,
+    "energy_kcal": 133.0,
+    "energy_kj": 551.0,
+    "sugars_g": 4.5,
+    "fibre_g": 0.0,
+    "saturates_g": 6.75,
+    "sodium_mg": 66.0,
+    "potassium_mg": 184.0,
+    "calcium_mg": 126.0,
+    "iron_mg": 0.11,
+    "vitamin_d_ug": 0.1,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "11-788": {
+   "name": "Porridge oats, unfortified",
+   "description": "18 samples, 10 products, Quaker and other/own brands",
+   "group": "A",
+   "nutrients": {
+    "protein_g": 10.9,
+    "fat_g": 8.1,
+    "carbohydrate_g": 70.7,
+    "energy_kcal": 381.0,
+    "energy_kj": 1614.0,
+    "sugars_g": 0.3,
+    "fibre_g": 7.8,
+    "saturates_g": 1.28,
+    "sodium_mg": 1.0,
+    "potassium_mg": 372.0,
+    "calcium_mg": 50.0,
+    "iron_mg": 3.64,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "11-981": {
+   "name": "Bread, wholemeal, average",
+   "description": "21 samples, sliced and unsliced",
+   "group": "AF",
+   "nutrients": {
+    "protein_g": 9.4,
+    "fat_g": 2.5,
+    "carbohydrate_g": 42.0,
+    "energy_kcal": 217.0,
+    "energy_kj": 922.0,
+    "sugars_g": 2.8,
+    "fibre_g": 7.0,
+    "saturates_g": 0.46,
+    "sodium_mg": 400.0,
+    "potassium_mg": 253.0,
+    "calcium_mg": 106.0,
+    "iron_mg": 2.4,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "13-527": {
+   "name": "Peas, frozen, raw",
+   "description": "12 samples, 8 brands, garden peas and petit pois",
+   "group": "DF",
+   "nutrients": {
+    "protein_g": 5.3,
+    "fat_g": 0.7,
+    "carbohydrate_g": 10.7,
+    "energy_kcal": 68.0,
+    "energy_kj": 288.0,
+    "sugars_g": 5.7,
+    "fibre_g": 5.3,
+    "saturates_g": 0.13,
+    "sodium_mg": 4.0,
+    "potassium_mg": 171.0,
+    "calcium_mg": 36.0,
+    "iron_mg": 1.75,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 22.0
+   },
+   "flags": {}
+  },
+  "13-627": {
+   "name": "Courgette, raw",
+   "description": "11 samples from UK and Spain, ends trimmed",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 1.3,
+    "fat_g": 0.2,
+    "carbohydrate_g": 2.3,
+    "energy_kcal": 16.0,
+    "energy_kj": 66.0,
+    "sugars_g": 2.2,
+    "fibre_g": 0.5,
+    "saturates_g": 0.05,
+    "sodium_mg": 0.0,
+    "potassium_mg": 341.0,
+    "calcium_mg": 27.0,
+    "iron_mg": 0.42,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 5.0
+   },
+   "flags": {
+    "sodium_mg": "trace"
+   }
+  },
+  "13-505": {
+   "name": "Mushrooms, white, raw",
+   "description": "11 samples, closed cap and button, UK grown and imported, pre-packed and loose",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 1.0,
+    "fat_g": 0.2,
+    "carbohydrate_g": 0.3,
+    "energy_kcal": 7.0,
+    "energy_kj": 29.0,
+    "sugars_g": 0.3,
+    "fibre_g": 0.7,
+    "saturates_g": 0.04,
+    "sodium_mg": 4.0,
+    "potassium_mg": 378.0,
+    "calcium_mg": 3.0,
+    "iron_mg": 0.21,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 1.0
+   },
+   "flags": {}
+  },
+  "14-277": {
+   "name": "Lemon juice, fresh",
+   "description": "Analysis and literature sources",
+   "group": "PE",
+   "nutrients": {
+    "protein_g": 0.3,
+    "fat_g": 0.0,
+    "carbohydrate_g": 1.6,
+    "energy_kcal": 7.0,
+    "energy_kj": 31.0,
+    "sugars_g": 1.6,
+    "fibre_g": null,
+    "saturates_g": 0.0,
+    "sodium_mg": 1.0,
+    "potassium_mg": 130.0,
+    "calcium_mg": 7.0,
+    "iron_mg": 0.1,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 36.0
+   },
+   "flags": {
+    "fat_g": "trace",
+    "saturates_g": "trace"
+   }
+  },
+  "17-726": {
+   "name": "Stock cubes, chicken",
+   "description": "7 samples, 4 brands including Oxo",
+   "group": "WY",
+   "nutrients": {
+    "protein_g": 15.4,
+    "fat_g": 15.4,
+    "carbohydrate_g": null,
+    "energy_kcal": null,
+    "energy_kj": null,
+    "sugars_g": null,
+    "fibre_g": 0.6,
+    "saturates_g": null,
+    "sodium_mg": 16300.0,
+    "potassium_mg": 400.0,
+    "calcium_mg": 120.0,
+    "iron_mg": 4.9,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "17-050": {
+   "name": "Honey",
+   "description": "8 samples; assorted types",
+   "group": "SC",
+   "nutrients": {
+    "protein_g": 0.4,
+    "fat_g": 0.0,
+    "carbohydrate_g": 76.4,
+    "energy_kcal": 288.0,
+    "energy_kj": 1229.0,
+    "sugars_g": 76.4,
+    "fibre_g": 0.0,
+    "saturates_g": 0.0,
+    "sodium_mg": 11.0,
+    "potassium_mg": 51.0,
+    "calcium_mg": 5.0,
+    "iron_mg": 0.4,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "12-334": {
+   "name": "Cream, fresh, double, including Jersey cream",
+   "description": "Average of 22 samples of summer and winter cream",
+   "group": "BJC",
+   "nutrients": {
+    "protein_g": 1.6,
+    "fat_g": 53.7,
+    "carbohydrate_g": 1.7,
+    "energy_kcal": 496.0,
+    "energy_kj": 2041.0,
+    "sugars_g": 1.7,
+    "fibre_g": 0.0,
+    "saturates_g": 33.39,
+    "sodium_mg": 22.0,
+    "potassium_mg": 65.0,
+    "calcium_mg": 49.0,
+    "iron_mg": 0.06,
+    "vitamin_d_ug": 0.3,
+    "vitamin_c_mg": 1.0
+   },
+   "flags": {}
+  },
+  "13-660": {
+   "name": "Beans, red kidney, canned in water, re-heated, drained",
+   "description": "Fibre only analysed. 10 samples, 9 products, heated for 3-5 minutes",
+   "group": "DB",
+   "nutrients": {
+    "protein_g": 8.6,
+    "fat_g": 1.0,
+    "carbohydrate_g": 15.1,
+    "energy_kcal": 100.0,
+    "energy_kj": 425.0,
+    "sugars_g": 0.8,
+    "fibre_g": 6.8,
+    "saturates_g": 0.2,
+    "sodium_mg": 0.0,
+    "potassium_mg": 366.0,
+    "calcium_mg": 38.0,
+    "iron_mg": 2.26,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "sodium_mg": "trace",
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "14-889": {
+   "name": "Coconut milk, retail",
+   "description": "Estimated from 2013 label data",
+   "group": "GA",
+   "nutrients": {
+    "protein_g": 1.1,
+    "fat_g": 16.9,
+    "carbohydrate_g": 3.3,
+    "energy_kcal": 169.0,
+    "energy_kj": 697.0,
+    "sugars_g": 2.0,
+    "fibre_g": 0.4,
+    "saturates_g": 14.64,
+    "sodium_mg": 0.0,
+    "potassium_mg": null,
+    "calcium_mg": null,
+    "iron_mg": null,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": null
+   },
+   "flags": {
+    "sodium_mg": "trace"
+   }
+  },
+  "17-721": {
+   "name": "Soy sauce, light and dark varieties",
+   "description": "8 samples, 4 brands",
+   "group": "WCN",
+   "nutrients": {
+    "protein_g": 3.0,
+    "fat_g": 0.0,
+    "carbohydrate_g": 17.9,
+    "energy_kcal": 79.0,
+    "energy_kj": 337.0,
+    "sugars_g": 16.4,
+    "fibre_g": 0.0,
+    "saturates_g": 0.0,
+    "sodium_mg": 5500.0,
+    "potassium_mg": 180.0,
+    "calcium_mg": 17.0,
+    "iron_mg": 2.4,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "fat_g": "trace",
+    "fibre_g": "trace"
+   }
+  },
+  "13-880": {
+   "name": "Pepper, black",
+   "description": "Literature sources",
+   "group": "H",
+   "nutrients": {
+    "protein_g": 10.4,
+    "fat_g": 3.3,
+    "carbohydrate_g": null,
+    "energy_kcal": null,
+    "energy_kj": null,
+    "sugars_g": 0.6,
+    "fibre_g": 25.3,
+    "saturates_g": 1.39,
+    "sodium_mg": 20.0,
+    "potassium_mg": 1329.0,
+    "calcium_mg": 443.0,
+    "iron_mg": 9.71,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "13-879": {
+   "name": "Paprika",
+   "description": "Literature sources",
+   "group": "H",
+   "nutrients": {
+    "protein_g": 14.1,
+    "fat_g": 12.9,
+    "carbohydrate_g": null,
+    "energy_kcal": null,
+    "energy_kj": null,
+    "sugars_g": 10.3,
+    "fibre_g": 34.9,
+    "saturates_g": 2.14,
+    "sodium_mg": 68.0,
+    "potassium_mg": 2280.0,
+    "calcium_mg": 229.0,
+    "iron_mg": 21.14,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 1.0
+   },
+   "flags": {}
+  },
+  "13-889": {
+   "name": "Cumin seeds",
+   "description": "Literature sources",
+   "group": "H",
+   "nutrients": {
+    "protein_g": 17.8,
+    "fat_g": 22.3,
+    "carbohydrate_g": null,
+    "energy_kcal": null,
+    "energy_kj": null,
+    "sugars_g": 2.3,
+    "fibre_g": 10.5,
+    "saturates_g": 1.54,
+    "sodium_mg": 168.0,
+    "potassium_mg": 1790.0,
+    "calcium_mg": 931.0,
+    "iron_mg": 66.36,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 8.0
+   },
+   "flags": {}
+  },
+  "13-804": {
+   "name": "Basil, fresh",
+   "description": "6 samples and literature sources",
+   "group": "H",
+   "nutrients": {
+    "protein_g": 3.1,
+    "fat_g": 0.8,
+    "carbohydrate_g": 5.1,
+    "energy_kcal": 40.0,
+    "energy_kj": 169.0,
+    "sugars_g": null,
+    "fibre_g": null,
+    "saturates_g": null,
+    "sodium_mg": 9.0,
+    "potassium_mg": 300.0,
+    "calcium_mg": 250.0,
+    "iron_mg": 5.5,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 26.0
+   },
+   "flags": {}
+  },
+  "12-526": {
+   "name": "Cheese, Parmesan, fresh",
+   "description": "8 samples, wedges/freshly grated",
+   "group": "BL",
+   "nutrients": {
+    "protein_g": 36.2,
+    "fat_g": 29.7,
+    "carbohydrate_g": 0.9,
+    "energy_kcal": 415.0,
+    "energy_kj": 1729.0,
+    "sugars_g": 0.9,
+    "fibre_g": 0.0,
+    "saturates_g": 19.25,
+    "sodium_mg": 660.0,
+    "potassium_mg": 152.0,
+    "calcium_mg": 1025.0,
+    "iron_mg": 0.8,
+    "vitamin_d_ug": 0.3,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "12-360": {
+   "name": "Cheese, Mozzarella, fresh",
+   "description": "18 samples, soft, not grated",
+   "group": "BL",
+   "nutrients": {
+    "protein_g": 18.6,
+    "fat_g": 20.3,
+    "carbohydrate_g": 0.0,
+    "energy_kcal": 257.0,
+    "energy_kj": 1067.0,
+    "sugars_g": 0.0,
+    "fibre_g": 0.0,
+    "saturates_g": 13.75,
+    "sodium_mg": 395.0,
+    "potassium_mg": 51.0,
+    "calcium_mg": 362.0,
+    "iron_mg": 0.0,
+    "vitamin_d_ug": 0.2,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {
+    "carbohydrate_g": "trace",
+    "sugars_g": "trace",
+    "iron_mg": "trace",
+    "vitamin_c_mg": "trace"
+   }
+  },
+  "13-529": {
+   "name": "Sweetcorn kernels, canned in water, drained",
+   "description": "12 samples, 8 brands, no added salt or sugar",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 2.6,
+    "fat_g": 1.7,
+    "carbohydrate_g": 13.9,
+    "energy_kcal": 78.0,
+    "energy_kj": 330.0,
+    "sugars_g": 7.5,
+    "fibre_g": 3.1,
+    "saturates_g": 0.27,
+    "sodium_mg": 1.0,
+    "potassium_mg": 158.0,
+    "calcium_mg": 3.0,
+    "iron_mg": 0.34,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 24.0
+   },
+   "flags": {}
+  },
+  "13-570": {
+   "name": "Tofu, soya bean, steamed",
+   "description": "Soya bean curd; 7 assorted samples",
+   "group": "DB",
+   "nutrients": {
+    "protein_g": 8.1,
+    "fat_g": 4.2,
+    "carbohydrate_g": 0.7,
+    "energy_kcal": 73.0,
+    "energy_kj": 304.0,
+    "sugars_g": 0.3,
+    "fibre_g": null,
+    "saturates_g": 0.5,
+    "sodium_mg": 4.0,
+    "potassium_mg": 63.0,
+    "calcium_mg": null,
+    "iron_mg": 1.2,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 0.0
+   },
+   "flags": {}
+  },
+  "13-355": {
+   "name": "Squash, butternut, raw",
+   "description": "Analytical and literature sources",
+   "group": "DG",
+   "nutrients": {
+    "protein_g": 1.1,
+    "fat_g": 0.1,
+    "carbohydrate_g": 8.3,
+    "energy_kcal": 36.0,
+    "energy_kj": 155.0,
+    "sugars_g": 4.5,
+    "fibre_g": null,
+    "saturates_g": 0.0,
+    "sodium_mg": 4.0,
+    "potassium_mg": 350.0,
+    "calcium_mg": 48.0,
+    "iron_mg": 0.7,
+    "vitamin_d_ug": 0.0,
+    "vitamin_c_mg": 21.0
+   },
+   "flags": {
+    "saturates_g": "trace"
+   }
+  }
+ },
+ "seed_foods": [
+  {
+   "name": "Dried pasta",
+   "cofid_code": "11-716",
+   "category": "Pasta, rice & grains",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Onion",
+   "cofid_code": "13-499",
+   "category": "Fruit & veg",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Garlic",
+   "cofid_code": "13-244",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Chopped tomatoes (tinned)",
+   "cofid_code": "13-530",
+   "category": "Tins & jars",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Tomatoes",
+   "cofid_code": "13-517",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Spinach",
+   "cofid_code": "13-572",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Chicken breast",
+   "cofid_code": "18-290",
+   "category": "Meat & fish",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Olive oil",
+   "cofid_code": "17-038",
+   "category": "Oils & condiments",
+   "default_unit": "ml",
+   "density_g_per_ml": 0.91
+  },
+  {
+   "name": "Butter",
+   "cofid_code": "17-685",
+   "category": "Dairy & eggs",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Semi-skimmed milk",
+   "cofid_code": "12-313",
+   "category": "Dairy & eggs",
+   "default_unit": "ml",
+   "density_g_per_ml": 1.03
+  },
+  {
+   "name": "Cheddar",
+   "cofid_code": "12-346",
+   "category": "Dairy & eggs",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Eggs",
+   "cofid_code": "12-937",
+   "category": "Dairy & eggs",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Basmati rice",
+   "cofid_code": "11-857",
+   "category": "Pasta, rice & grains",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Plain flour",
+   "cofid_code": "11-886",
+   "category": "Baking",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Caster sugar",
+   "cofid_code": "17-063",
+   "category": "Baking",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Carrots",
+   "cofid_code": "13-496",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Potatoes",
+   "cofid_code": "13-489",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Red lentils",
+   "cofid_code": "13-657",
+   "category": "Pasta, rice & grains",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Chickpeas (tinned, drained)",
+   "cofid_code": "13-670",
+   "category": "Tins & jars",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Bananas",
+   "cofid_code": "14-318",
+   "category": "Fruit & veg",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Apples",
+   "cofid_code": "14-319",
+   "category": "Fruit & veg",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Red pepper",
+   "cofid_code": "13-524",
+   "category": "Fruit & veg",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Broccoli",
+   "cofid_code": "13-502",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Beef mince",
+   "cofid_code": "18-469",
+   "category": "Meat & fish",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Salmon fillet",
+   "cofid_code": "16-356",
+   "category": "Meat & fish",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Greek-style yogurt",
+   "cofid_code": "12-555",
+   "category": "Dairy & eggs",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Porridge oats",
+   "cofid_code": "11-788",
+   "category": "Breakfast",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Wholemeal bread",
+   "cofid_code": "11-981",
+   "category": "Bakery",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Frozen peas",
+   "cofid_code": "13-527",
+   "category": "Frozen",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Courgette",
+   "cofid_code": "13-627",
+   "category": "Fruit & veg",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Mushrooms",
+   "cofid_code": "13-505",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Lemon juice",
+   "cofid_code": "14-277",
+   "category": "Oils & condiments",
+   "default_unit": "ml",
+   "density_g_per_ml": 1.03
+  },
+  {
+   "name": "Chicken stock cube",
+   "cofid_code": "17-726",
+   "category": "Tins & jars",
+   "default_unit": "each",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Honey",
+   "cofid_code": "17-050",
+   "category": "Baking",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Double cream",
+   "cofid_code": "12-334",
+   "category": "Dairy & eggs",
+   "default_unit": "ml",
+   "density_g_per_ml": 0.97
+  },
+  {
+   "name": "Kidney beans (tinned, drained)",
+   "cofid_code": "13-660",
+   "category": "Tins & jars",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Coconut milk",
+   "cofid_code": "14-889",
+   "category": "Tins & jars",
+   "default_unit": "ml",
+   "density_g_per_ml": 0.98
+  },
+  {
+   "name": "Soy sauce",
+   "cofid_code": "17-721",
+   "category": "Oils & condiments",
+   "default_unit": "ml",
+   "density_g_per_ml": 1.15
+  },
+  {
+   "name": "Black pepper",
+   "cofid_code": "13-880",
+   "category": "Herbs & spices",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Paprika",
+   "cofid_code": "13-879",
+   "category": "Herbs & spices",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Cumin seeds",
+   "cofid_code": "13-889",
+   "category": "Herbs & spices",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Fresh basil",
+   "cofid_code": "13-804",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Parmesan",
+   "cofid_code": "12-526",
+   "category": "Dairy & eggs",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Mozzarella",
+   "cofid_code": "12-360",
+   "category": "Dairy & eggs",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Sweetcorn (tinned, drained)",
+   "cofid_code": "13-529",
+   "category": "Tins & jars",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Tofu",
+   "cofid_code": "13-570",
+   "category": "Chilled",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  },
+  {
+   "name": "Butternut squash",
+   "cofid_code": "13-355",
+   "category": "Fruit & veg",
+   "default_unit": "g",
+   "density_g_per_ml": null
+  }
+ ]
+}

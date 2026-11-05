@@ -1,0 +1,111 @@
+"""Stock-event arithmetic, lots, ledger invariants (acceptance test 2)."""
+import pytest
+from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
+
+
+def _product(client, barcode="5000000000017"):
+    r = client.post("/api/v1/products", json={"name": "Farfalle", "brand": "Store brand", "food_name": "Dried pasta",
+                                               "package_quantity": 500, "package_unit": "g", "barcode": barcode})
+    assert r.status_code == 201, r.text
+    return r.json()
+
+
+def test_scan_known_two_lots_prices_and_earliest_date(client):
+    prod = _product(client)
+    scan = client.post("/api/v1/pantry/scan", json={"barcode": "5000000000017"}).json()
+    assert scan["status"] == "known" and scan["product"]["id"] == prod["id"]
+    # Scanning alone records nothing
+    assert client.get("/api/v1/pantry").json()["count"] == 0
+    a = client.post("/api/v1/pantry/lots", json={"product_id": prod["id"], "quantity": 1, "unit": "pack", "purchased_on": "2026-10-01",
+                                                  "best_before": "2027-06-01", "store": "Tesco", "price_paid_pence": 95})
+    b = client.post("/api/v1/pantry/lots", json={"product_id": prod["id"], "quantity": 2, "unit": "pack", "purchased_on": "2026-10-20",
+                                                  "best_before": "2027-03-01", "store": "Lidl", "price_paid_pence": 150})
+    assert a.status_code == 201 and b.status_code == 201, (a.text, b.text)
+    items = client.get("/api/v1/pantry").json()["items"]
+    assert len(items) == 1
+    g = items[0]
+    assert g["quantity_base"] == 1500 and g["display"] == "1.5 kg"
+    assert g["earliest_date"] == "2027-03-01" and len(g["lots"]) == 2
+    hist = client.get(f"/api/v1/prices/history?productId={prod['id']}").json()
+    paid = [s for s in hist["series"] if s["kind"] == "paid"]
+    assert sorted(s["price_pence"] for s in paid) == [95, 150]
+    assert sorted(round(s["unit_price_pence"]) for s in paid) == [150, 190]  # £1.50/kg and £1.90/kg
+    assert hist["summary"]["lowest"] == 150 and hist["summary"]["standard_unit"] == "kg"
+
+
+def test_unknown_barcode_quick_add(client):
+    scan = client.post("/api/v1/pantry/scan", json={"barcode": "9999999999994"}).json()
+    assert scan["status"] == "unknown"
+    r = client.post("/api/v1/pantry/lots", json={"new_product": {"name": "Oat drink", "package_quantity": 1, "package_unit": "l",
+                                                                  "barcode": "9999999999994", "food_name": "Oat drink"},
+                                                  "quantity": 1, "unit": "pack", "location": "fridge"})
+    assert r.status_code == 201, r.text
+    assert r.json()["lot"]["quantity_base"] == 1000 and r.json()["lot"]["base_unit"] == "ml"
+    assert client.post("/api/v1/pantry/scan", json={"barcode": "9999999999994"}).json()["status"] == "known"
+
+
+def test_loose_produce_and_event_arithmetic(client):
+    r = client.post("/api/v1/pantry/lots", json={"food_name": "Spinach", "quantity": 250, "unit": "g", "location": "fridge",
+                                                  "use_by": "2026-11-07"})
+    lot = r.json()["lot"]
+    ev = lambda **b: client.post("/api/v1/pantry/events", json={"lot_id": lot["id"], **b})  # noqa: E731
+    assert ev(type="consumption", quantity=100, unit="g").json()["lot"]["quantity_base"] == 150
+    assert ev(type="waste", quantity=0.05, unit="kg", reason="wilted").json()["lot"]["quantity_base"] == 100
+    # negative stock refused without override
+    r = ev(type="consumption", quantity=150, unit="g")
+    assert r.status_code == 409
+    # override needs a reason
+    assert ev(type="consumption", quantity=150, unit="g", negative_override=True).status_code == 422
+    r = ev(type="consumption", quantity=150, unit="g", negative_override=True, override_reason="Used more than recorded; will recount")
+    assert r.status_code == 201 and r.json()["lot"]["quantity_base"] == -50
+    # correction to a counted value keeps history
+    r = ev(type="correction", new_quantity=40, unit="g", reason="Stocktake")
+    assert r.json()["lot"]["quantity_base"] == 40 and r.json()["event"]["delta_base"] == 90
+    r = ev(type="transfer", to_location="freezer")
+    assert r.json()["lot"]["location"] == "freezer" and r.json()["lot"]["quantity_base"] == 40
+    detail = client.get(f"/api/v1/pantry/lots/{lot['id']}").json()
+    assert [e["type"] for e in detail["events"]] == ["purchase", "consumption", "waste", "consumption", "correction", "transfer"]
+    assert sum(e["delta_base"] for e in detail["events"]) == pytest.approx(40)
+    assert client.get("/api/v1/pantry/consistency").json()["mismatches"] == []
+
+
+def test_idempotent_event(client):
+    lot = client.post("/api/v1/pantry/lots", json={"food_name": "Rice", "quantity": 1000, "unit": "g"}).json()["lot"]
+    body = {"lot_id": lot["id"], "type": "consumption", "quantity": 100, "unit": "g", "idempotency_key": "k1"}
+    client.post("/api/v1/pantry/events", json=body)
+    client.post("/api/v1/pantry/events", json=body)
+    assert client.get(f"/api/v1/pantry/lots/{lot['id']}").json()["lot"]["quantity_base"] == 900
+    # HTTP-level Idempotency-Key replays the stored response
+    body2 = {"lot_id": lot["id"], "type": "consumption", "quantity": 50, "unit": "g"}
+    r1 = client.post("/api/v1/pantry/events", json=body2, headers={"Idempotency-Key": "http-1"})
+    r2 = client.post("/api/v1/pantry/events", json=body2, headers={"Idempotency-Key": "http-1"})
+    assert r1.json() == r2.json() and r2.headers.get("idempotent-replay") == "true"
+    assert client.get(f"/api/v1/pantry/lots/{lot['id']}").json()["lot"]["quantity_base"] == 850
+
+
+def test_duplicate_lot_warning(client):
+    body = {"food_name": "Butter", "quantity": 250, "unit": "g", "best_before": "2026-12-01"}
+    assert client.post("/api/v1/pantry/lots", json=body).status_code == 201
+    r = client.post("/api/v1/pantry/lots", json=body)
+    assert r.status_code == 409 and r.json()["detail"]["code"] == "possible_duplicate"
+    assert client.post("/api/v1/pantry/lots", json={**body, "confirm_duplicate": True}).status_code == 201
+
+
+def test_ledger_is_append_only(client, db):
+    lot = client.post("/api/v1/pantry/lots", json={"food_name": "Flour", "quantity": 1, "unit": "kg"}).json()["lot"]
+    with pytest.raises(DBAPIError):
+        db.execute(text("UPDATE stock_event SET delta_base = 5 WHERE lot_id = :l"), {"l": lot["id"]})
+        db.commit()
+    db.rollback()
+    with pytest.raises(DBAPIError):
+        db.execute(text("DELETE FROM stock_event WHERE lot_id = :l"), {"l": lot["id"]})
+        db.commit()
+    db.rollback()
+
+
+def test_label_edit_conflict(client):
+    lot = client.post("/api/v1/pantry/lots", json={"food_name": "Yogurt", "quantity": 500, "unit": "g"}).json()["lot"]
+    assert client.patch(f"/api/v1/pantry/lots/{lot['id']}", json={"use_by": "2026-11-10", "row_version": lot["row_version"]}).status_code == 200
+    r = client.patch(f"/api/v1/pantry/lots/{lot['id']}", json={"use_by": "2026-11-11", "row_version": lot["row_version"]})
+    assert r.status_code == 409 and r.json()["detail"]["code"] == "conflict"

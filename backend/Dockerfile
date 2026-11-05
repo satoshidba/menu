@@ -27,7 +27,7 @@ COPY backend/app ./app
 COPY backend/tests ./tests
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN useradd --system --uid 10001 --home /app larder && mkdir -p /data && chown larder /data && chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN useradd --system --uid 10001 --home /app larder && mkdir -p /data/media /data/receipts /data/backups && chown -R larder /data && chmod +x /usr/local/bin/docker-entrypoint.sh
 USER larder
 ENV LARDER_DATA_DIR=/data
 VOLUME ["/data"]

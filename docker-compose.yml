@@ -14,7 +14,8 @@ x-app: &app
     LARDER_DATA_DIR: /data
   volumes:
     - larder_data:/data
-    - ${LARDER_BACKUP_DIR:-./backups}:/data/backups
+    # Named volume by default; set LARDER_BACKUP_DIR to a host folder owned by uid 10001 to write backups there instead.
+    - ${LARDER_BACKUP_DIR:-larder_backups}:/data/backups
   depends_on:
     db:
       condition: service_healthy
@@ -83,5 +84,6 @@ services:
 volumes:
   pgdata:
   larder_data:
+  larder_backups:
   caddy_data:
   caddy_config:

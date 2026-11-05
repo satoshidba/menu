@@ -126,3 +126,25 @@ can't be fetched, the recipe shows a placeholder rather than a substitute.
 The seed household and its people are fictional, the recipes were written for this project, and product names are
 generic. The four dish photos come from Wikimedia Commons under CC0, CC BY 2.0 and CC BY 4.0, with attribution
 recorded and shown on the image. Two recipe titles were adjusted to match what the photos show.
+
+### ADR-020 — MCP server as a stateless client of the REST API
+Added at the household's request so the app can be used by agents. The server lives in `mcp-server/` and uses the
+official MCP Python SDK 2.x (`MCPServer`). It has two transports: streamable HTTP (stateless, JSON responses), served
+by Caddy at `/mcp`, and stdio for local clients.
+
+**It holds no credentials and no data.** Each HTTP request must carry the caller's Larder API token, which is
+forwarded to the API; in stdio mode the token comes from `LARDER_TOKEN`. This means:
+- token scopes, the review-first rules, idempotency, the audit trail and revocation all work unchanged;
+- there is no second permission model to keep in sync.
+
+**Agent-friendly API additions:**
+- `POST /pantry/use`: use or waste an amount of an item, first-expiry-first-out, never below zero.
+- Tokens with `plan:read` can list household profiles, but not intake, for planning.
+- A Settings preset creates an agent token: everything except admin, export and children's intake.
+
+**Tool design:**
+- Tools accept names as well as ids, and return compact shapes.
+- Read, write and remove tools carry MCP annotations.
+- Draft, apply and overwrite steps are separate tools, and `apply_receipt` requires an explicit `confirm=true`.
+
+OAuth for remote clients that only support OAuth sign-in isn't implemented. Those clients can use stdio instead.

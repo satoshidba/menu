@@ -30,6 +30,9 @@ a UK household (two adults, two toddlers, one dog): UK English, GBP, metric unit
   with servings from their usual portions, and planned meals offer "plan without them".
 - **Nutrition**: CoFID and label data with provenance. Per-serving and per-person intake snapshots. Unknown is never
   counted as zero. JSON and CSV export, plus scoped read-only tokens for an activity app.
+- **AI agents (MCP)**: a built-in MCP server at `https://<site>/mcp`, or run locally over stdio. Agents can plan the
+  week, handle who's out, manage the pantry and shopping, draft recipes and review receipts, using a scoped token
+  and Larder's review-first rules. See [docs/MCP.md](docs/MCP.md).
 - **Operations**: Docker Compose, HTTPS via Caddy, nightly (optionally encrypted) backups with a tested restore, and
   a full household export.
 
@@ -60,6 +63,7 @@ docker compose exec -e LARDER_DEMO_PASSWORD=choose-a-password web python -m app.
 |---|---|
 | [docs/SETUP.md](docs/SETUP.md) | Install, HTTPS on phones and tablets, configuration, upgrades, backups and restore |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | Short guide for the household |
+| [docs/MCP.md](docs/MCP.md) | Connecting AI agents over MCP: setup, tools, safety |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Modules, data model, invariants, API and export contract |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture decision log, including the Mealie decision |
 | [docs/DESIGN.md](docs/DESIGN.md) | Visual direction, tokens, contrast checks and screenshots |

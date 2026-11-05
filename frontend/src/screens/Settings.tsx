@@ -137,14 +137,28 @@ function Tokens() {
   const [error, setError] = useState<string | null>(null);
   async function create(e: FormEvent) {
     e.preventDefault();
-    try { setCreated(await api("/tokens", { body: form })); setForm(null); reload(); } catch (err) { setError(errorText(err)); }
+    try { const { agent: _agent, ...body } = form; setCreated(await api("/tokens", { body })); setForm(null); reload(); } catch (err) { setError(errorText(err)); }
   }
   const toggle = (k: string, v: string) => setForm({ ...form, [k]: form[k].includes(v) ? form[k].filter((x: string) => x !== v) : [...form[k], v] });
   return (
     <section className="panel">
-      <div className="spread"><h2>Connected apps</h2><button className="btn small" onClick={() => setForm({ name: "Activity app", scopes: ["intake:read"], person_ids: [] })}><Icon name="plus" size={16} />New token</button></div>
+      <div className="spread"><h2>Connected apps</h2>
+        <div className="row-wrap">
+          <button className="btn small" onClick={() => setForm({ name: "AI agent (MCP)", agent: true, person_ids: (people.data || []).filter((p) => p.kind === "adult").map((p) => p.id),
+            scopes: ["recipes:read", "recipes:write", "pantry:read", "pantry:write", "plan:read", "plan:write", "receipts:write", "intake:read", "intake:write"] })}><Icon name="idea" size={16} />AI agent</button>
+          <button className="btn small" onClick={() => setForm({ name: "Activity app", scopes: ["intake:read"], person_ids: [] })}><Icon name="plus" size={16} />New token</button>
+        </div>
+      </div>
       <p className="xsmall muted">Read-only tokens let another app poll intake via <code>/api/v1/people/&lt;id&gt;/intake/export?updated_since=…</code>. Children's intake is only shared with the explicit children scope.</p>
-      {created && <Notice tone="warn">Copy this token now; it won't be shown again:<pre className="raw" style={{ userSelect: "all", margin: "6px 0 0", wordBreak: "break-all" }}>{created.token}</pre></Notice>}
+      {created && <Notice tone="warn">Copy this token now; it won't be shown again:<pre className="raw" style={{ userSelect: "all", margin: "6px 0 0", wordBreak: "break-all" }}>{created.token}</pre>
+        {created.scopes.includes("plan:write") && (
+          <div className="small" style={{ marginTop: 8 }}>
+            To connect an AI agent over MCP, point it at <code>{window.location.origin}/mcp</code> and send the token as a bearer header. For example, in Claude Code:
+            <pre className="raw" style={{ userSelect: "all", margin: "6px 0 0", wordBreak: "break-all" }}>{`claude mcp add --transport http larder ${window.location.origin}/mcp --header "Authorization: Bearer ${created.token}"`}</pre>
+            See docs/MCP.md for desktop apps and local (stdio) use.
+          </div>
+        )}
+      </Notice>}
       <ul className="list" style={{ marginTop: 8 }}>
         {(data || []).map((t) => (
           <li key={t.id} className="list-row">
@@ -158,6 +172,7 @@ function Tokens() {
       <Sheet open={!!form} onClose={() => setForm(null)} title="New API token">
         {form && <form className="stack" onSubmit={create}>
           <Field label="Name"><input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+          {form.agent && <p className="xsmall muted">An AI agent can read and plan, add and use stock, draft recipes and changes, and review receipts. Drafts and receipts still need your go-ahead before they're saved or applied. Children's intake isn't shared unless you tick the children scope.</p>}
           <fieldset className="stack-sm" style={{ border: 0, padding: 0, margin: 0 }}><legend className="eyebrow">Allowed</legend>
             {Object.entries(scopes.data || {}).map(([k, d]) => <label key={k} className="row small"><input type="checkbox" checked={form.scopes.includes(k)} onChange={() => toggle("scopes", k)} /> <code>{k}</code> <span className="muted">{d}</span></label>)}</fieldset>
           <fieldset className="stack-sm" style={{ border: 0, padding: 0, margin: 0 }}><legend className="eyebrow">Whose intake</legend>

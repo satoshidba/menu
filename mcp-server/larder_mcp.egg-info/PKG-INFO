@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: larder-mcp
+Version: 1.0.0
+Summary: MCP server for Larder: recipes, pantry, planning, shopping, receipts and nutrition for AI agents
+Requires-Python: >=3.11
+Requires-Dist: mcp==2.3.0
+Requires-Dist: httpx==0.28.1
+Requires-Dist: uvicorn==0.54.0

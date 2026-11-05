@@ -1,0 +1,10 @@
+pyproject.toml
+larder_mcp/__init__.py
+larder_mcp/client.py
+larder_mcp/server.py
+larder_mcp.egg-info/PKG-INFO
+larder_mcp.egg-info/SOURCES.txt
+larder_mcp.egg-info/dependency_links.txt
+larder_mcp.egg-info/entry_points.txt
+larder_mcp.egg-info/requires.txt
+larder_mcp.egg-info/top_level.txt

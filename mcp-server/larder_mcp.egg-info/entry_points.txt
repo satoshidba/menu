@@ -1,0 +1,2 @@
+[console_scripts]
+larder-mcp = larder_mcp.server:main

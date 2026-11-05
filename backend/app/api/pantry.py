@@ -282,6 +282,58 @@ def post_event(body: EventIn, p: Principal = Depends(require("pantry:write")), d
     return {"event": event_out(ev), "lot": lot_out(lot)}
 
 
+class UseIn(BaseModel):
+    food_id: uuid.UUID | None = None
+    product_id: uuid.UUID | None = None
+    quantity: float = Field(gt=0)
+    unit: str
+    type: str = Field("consumption", pattern="^(consumption|waste)$")
+    reason: str | None = None
+    idempotency_key: str | None = Field(None, max_length=120)
+
+
+@router.post("/use", status_code=201)
+def use_stock(body: UseIn, p: Principal = Depends(require("pantry:write")), db: Session = Depends(get_db)):
+    """Use or throw away an amount of a food/product, taking from the earliest-dated lots first. Never goes below zero;
+    any shortfall is reported rather than recorded."""
+    from ..services.stock import consume_fefo, factors_for, usable_lots
+
+    if bool(body.food_id) == bool(body.product_id):
+        raise HTTPException(422, "Give exactly one of food_id or product_id")
+    product = get_owned(db, Product, body.product_id, p.household_id, "Product") if body.product_id else None
+    food = get_owned(db, Food, body.food_id, p.household_id, "Food") if body.food_id else None
+    target = {"product_id": product.id} if product else {"food_id": food.id}
+    lots = usable_lots(db, p.household_id, include_pet=True, **target)
+    if not lots:
+        raise HTTPException(409, "There's none of that in the pantry")
+    unit = canonical_unit(body.unit) or body.unit
+    from ..services.units import convert
+    c = convert(body.quantity, unit, lots[0].base_unit, factors_for(db, product, food))
+    if unit == "pack" and product and product.package_base_quantity:
+        c.quantity = body.quantity * product.package_base_quantity
+    if c.quantity is None:
+        raise HTTPException(422, f"Can't convert {body.quantity:g} {unit} to {lots[0].base_unit}: {c.note}")
+    if body.type == "waste":
+        from ..services.stock import EventInput, record_event
+        remaining, out = c.quantity, []
+        for lot in lots:
+            if remaining <= 1e-9 or lot.base_unit != lots[0].base_unit:
+                continue
+            take = min(lot.quantity_base, remaining)
+            record_event(db, lot.id, p.household_id, EventInput(type="waste", quantity=take, unit=lot.base_unit, reason=body.reason,
+                                                                idempotency_key=f"{body.idempotency_key}:{lot.id}" if body.idempotency_key else None),
+                         actor_user_id=p.user_id)
+            out.append({"lot_id": str(lot.id), "quantity_base": take, "base_unit": lot.base_unit})
+            remaining -= take
+        short = max(0.0, remaining)
+    else:
+        out, short = consume_fefo(db, p.household_id, **target, quantity_base=c.quantity, base_unit=lots[0].base_unit,
+                                  reason=body.reason or "Used", actor_user_id=p.user_id, key_prefix=body.idempotency_key)
+    db.commit()
+    return {"deducted": out, "shortfall_base": round(short, 3), "base_unit": lots[0].base_unit,
+            "message": f"Short by {uk_display(short, lots[0].base_unit)}; stock was not taken below zero." if short > 1e-6 else None}
+
+
 @router.get("/events")
 def list_events(lot_id: uuid.UUID | None = None, since: datetime | None = None, limit: int = Query(100, le=1000),
                 p: Principal = Depends(require("pantry:read")), db: Session = Depends(get_db)):

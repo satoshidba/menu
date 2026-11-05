@@ -250,7 +250,9 @@ class PersonIn(BaseModel):
 @router.get("/people")
 def list_people(p: Principal = Depends(current_principal), db: Session = Depends(get_db)):
     rows = db.scalars(select(PersonProfile).where(PersonProfile.household_id == p.household_id).order_by(PersonProfile.kind, PersonProfile.name))
-    return [person_out(x) for x in rows if p.is_user or p.can_read_person_intake(x)]
+    # Tokens see people they may read intake for; planning tokens (plan:read) see everyone's profile, which planning
+    # needs (allergies, preferences, usual portions) — but never intake unless the intake scopes also allow it.
+    return [person_out(x) for x in rows if p.is_user or "plan:read" in p.scopes or p.can_read_person_intake(x)]
 
 
 @router.post("/people", status_code=201)

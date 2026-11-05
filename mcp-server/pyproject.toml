@@ -1,0 +1,20 @@
+[project]
+name = "larder-mcp"
+version = "1.0.0"
+description = "MCP server for Larder: recipes, pantry, planning, shopping, receipts and nutrition for AI agents"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp==2.3.0",
+  "httpx==0.28.1",
+  "uvicorn==0.54.0",
+]
+
+[project.scripts]
+larder-mcp = "larder_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["larder_mcp"]

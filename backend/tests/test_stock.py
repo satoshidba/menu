@@ -109,3 +109,14 @@ def test_label_edit_conflict(client):
     assert client.patch(f"/api/v1/pantry/lots/{lot['id']}", json={"use_by": "2026-11-10", "row_version": lot["row_version"]}).status_code == 200
     r = client.patch(f"/api/v1/pantry/lots/{lot['id']}", json={"use_by": "2026-11-11", "row_version": lot["row_version"]})
     assert r.status_code == 409 and r.json()["detail"]["code"] == "conflict"
+
+
+def test_use_by_food_takes_earliest_first(client):
+    a = client.post("/api/v1/pantry/lots", json={"food_name": "Milk", "quantity": 1, "unit": "l", "use_by": "2026-11-20"}).json()["lot"]
+    b = client.post("/api/v1/pantry/lots", json={"food_name": "Milk", "quantity": 1, "unit": "l", "use_by": "2026-11-10"}).json()["lot"]
+    r = client.post("/api/v1/pantry/use", json={"food_id": a["food_id"], "quantity": 1200, "unit": "ml"})
+    assert r.status_code == 201, r.text
+    assert [d["lot_id"] for d in r.json()["deducted"]] == [b["id"], a["id"]] and r.json()["shortfall_base"] == 0
+    r = client.post("/api/v1/pantry/use", json={"food_id": a["food_id"], "quantity": 1, "unit": "l", "type": "waste", "reason": "sour"})
+    assert r.json()["shortfall_base"] == 200 and "below zero" in r.json()["message"]
+    assert client.get("/api/v1/pantry/consistency").json()["mismatches"] == []

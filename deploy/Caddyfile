@@ -24,6 +24,13 @@
 		max_size 20MB
 	}
 
+	# MCP endpoint for AI agents (each client authenticates with its own Larder API token)
+	handle /mcp* {
+		reverse_proxy mcp:8001 {
+			flush_interval -1
+		}
+	}
+
 	handle /api/* {
 		reverse_proxy web:8000
 	}

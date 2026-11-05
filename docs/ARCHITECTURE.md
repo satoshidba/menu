@@ -5,6 +5,7 @@ A modular monolith: one FastAPI application with domain modules, one worker proc
 
 ```
 browser (PWA, service worker) ──HTTPS──> Caddy ──/api──> web (FastAPI, uvicorn) ──> PostgreSQL 16
+AI agent (MCP client) ─────────HTTPS──>   └─/mcp──> mcp (larder-mcp) ──(caller's token)──> web
                                           └─static /srv                 │
                                                         worker ─────────┘  (job queue: import_job, SKIP LOCKED)
                                                           ├─ OCR (Tesseract), pdftotext, pg_dump
@@ -22,6 +23,7 @@ browser (PWA, service worker) ──HTTPS──> Caddy ──/api──> web (Fa
 | `backend/app/worker.py`, `cli.py`, `seed.py` | Worker loop and scheduler, admin CLI, sample data |
 | `frontend/src/` | PWA: `screens/`, `components/`, `lib/` (API client, formats), `styles.css` (design tokens) |
 | `deploy/` | Caddyfile and the web image |
+| `mcp-server/` | MCP server for agents (`larder_mcp`): stdio and streamable HTTP, forwarding each caller's token to the API; see `docs/MCP.md` |
 | `tools/screens.mjs` | Screenshot script used for design review |
 
 ## Data model

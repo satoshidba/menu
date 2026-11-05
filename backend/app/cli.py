@@ -20,7 +20,7 @@ def main(argv=None) -> int:
     b = sub.add_parser("backup", help="Create a backup now")
     b.add_argument("--passphrase", default=None)
     r = sub.add_parser("restore", help="Restore a backup archive (stop the web and worker services first)")
-    r.add_argument("file")
+    r.add_argument("file", help="Path inside the container, or - to read the archive from standard input")
     r.add_argument("--passphrase", default=None)
     r.add_argument("--yes", action="store_true")
     e = sub.add_parser("export", help="Write a full household export zip")
@@ -63,12 +63,26 @@ def main(argv=None) -> int:
     elif args.cmd == "restore":
         from .services.backup import restore_backup
 
-        if not args.yes:
-            ans = input("This replaces ALL current data with the backup. Type RESTORE to continue: ")
-            if ans.strip() != "RESTORE":
-                print("Cancelled")
+        if args.file == "-":
+            import tempfile
+            if not args.yes:
+                print("Reading the archive from stdin needs --yes (there is no terminal to confirm on).")
                 return 1
-        print(json.dumps(restore_backup(Path(args.file), args.passphrase), indent=1))
+            with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
+                tmp.write(sys.stdin.buffer.read())
+            src = Path(tmp.name)
+        else:
+            src = Path(args.file)
+            if not args.yes:
+                ans = input("This replaces ALL current data with the backup. Type RESTORE to continue: ")
+                if ans.strip() != "RESTORE":
+                    print("Cancelled")
+                    return 1
+        try:
+            print(json.dumps(restore_backup(src, args.passphrase), indent=1))
+        finally:
+            if args.file == "-":
+                src.unlink(missing_ok=True)
     elif args.cmd == "export":
         from .services.export import build_export
 

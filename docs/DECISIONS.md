@@ -192,3 +192,26 @@ records when each location was last counted; Today nudges after 30 days.
 Exact-name matching creates near-duplicate foods. `GET /foods/duplicates` suggests pairs by trigram similarity or one
 name containing the other (singular/plural aware), with how much each is used so the busier one is kept. `POST /foods/{id}/merge` repoints every table that references the food in one transaction, merges aliases and unit conversions, keeps the
 old name as an alias and deletes the source. It needs an explicit target, and nothing merges automatically.
+
+### ADR-024 — Insights and run-out forecasts
+Insights are computed on request from purchases, price observations and the stock ledger. Nothing is stored, so
+corrections and merges show up immediately and there's nothing to keep in sync. A household's volumes are small enough
+for this to be fast.
+
+**Money.** Spending uses the price paid per purchase line, with returns subtracted, split into food, pet food and
+health products. Waste and use are valued at the share of the pack's price paid, so unpriced stock is counted
+separately rather than guessed. Unit prices are per kg, L or item, and the change is the latest price against the
+median of earlier ones, so one promotion doesn't read as a trend.
+
+**Forecasts** use one of two methods and say which:
+- *Usage*: everything that left the pantry (used, thrown away, past its date) over up to 8 weeks gives a daily rate.
+  The coefficient of variation of the weekly totals widens the range, as `stock / (rate × (1 ± cv))`. This needs at
+  least 14 days of history and 4 events. Confidence is high with 6 or more steady weeks, low under 3 weeks or with
+  very uneven use, and medium otherwise.
+- *Purchase rhythm*, when use isn't logged: the median gap between purchase days, with a range from the quartiles (or
+  min/max), from 3 or more purchases in 6 months. Items that look abandoned are dropped. When stock already covers a
+  usual purchase, the forecast is shown but not added to the shopping list.
+
+Forecasts whose earliest date falls within the shopping horizon appear on the list as `forecast` items, with the basis
+in the reason. Dismissing one is remembered, like other generated items. Medicines and supplements are left out, since
+they have their own minimum-stock reminders.

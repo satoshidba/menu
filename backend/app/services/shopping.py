@@ -89,8 +89,19 @@ def generate(db: Session, household_id: uuid.UUID, start: date | None = None, en
             low_products[prod.id] = {"product": prod, "reason": f"Running low: {uk_display(have, prod.base_unit)} left "
                                                                 f"(minimum {uk_display(prod.min_stock_base, prod.base_unit)})"}
 
+    # Forecasts: foods used regularly that will probably run out before the end of this shop's horizon
+    from .insights import forecasts
+    likely: dict[uuid.UUID, dict] = {}
+    for fc in forecasts(db, household_id)["forecasts"]:
+        fid = uuid.UUID(fc["food_id"])
+        if fid in wanted or fid in low or fc["stock_covers_usual_buy"] or date.fromisoformat(fc["earliest"]) > end:
+            continue
+        when = "out now" if fc["out_now"] else f"likely to run out {_range(fc)}"
+        likely[fid] = {"food": db.get(Food, fid), "reason": f"{when[0].upper() + when[1:]} ({fc['confidence']} confidence). {fc['basis']}",
+                       "forecast": fc}
+
     existing = list(db.scalars(select(ShoppingListItem).where(ShoppingListItem.household_id == household_id,
-                                                              ShoppingListItem.origin.in_(("plan", "low_stock")))))
+                                                              ShoppingListItem.origin.in_(("plan", "low_stock", "forecast")))))
     by_key = {(i.origin, i.food_id or i.product_id): i for i in existing}
     touched = set()
     for fid, w in wanted.items():
@@ -123,12 +134,27 @@ def generate(db: Session, household_id: uuid.UUID, start: date | None = None, en
             db.add(item)
         touched.add(("low_stock", pid))
         item.reason = l["reason"]
+    for fid, l in likely.items():
+        item = by_key.get(("forecast", fid))
+        if item is None:
+            item = ShoppingListItem(household_id=household_id, food_id=fid, name=l["food"].name, origin="forecast",
+                                    is_pet_food=l["food"].is_pet_food)
+            db.add(item)
+        touched.add(("forecast", fid))
+        item.reason, item.aisle = l["reason"], l["food"].category
+        item.details = {"forecast": {k: l["forecast"][k] for k in ("method", "earliest", "latest", "confidence")}}
     # Remove generated rows that are no longer needed (unless the user ticked/edited them).
     for key, item in by_key.items():
         if key not in touched and not item.checked and not item.user_edited:
             db.delete(item)
     db.flush()
     return {"from": start.isoformat(), "to": end.isoformat(), "planned_meals": len(plans), "unresolved": unquantified}
+
+
+def _range(fc: dict) -> str:
+    from .insights import short_date
+    a, b = date.fromisoformat(fc["earliest"]), date.fromisoformat(fc["latest"])
+    return f"around {short_date(a)}" if a == b else f"between {short_date(a)} and {short_date(b)}"
 
 
 def _meals(plans: list[MealPlan]) -> str:

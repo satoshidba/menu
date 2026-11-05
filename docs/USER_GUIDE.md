@@ -78,6 +78,8 @@ paste the text. Then review it like a ledger:
 - **Shopping list** = what the planned meals need minus what's usable in the pantry. Food past its use-by before the
   meal doesn't count. It updates when plans or stock change. You can pick a brand, set a shop, tick things off, snooze
   or dismiss items, and add your own.
+- Things you use regularly also appear on the list when they're **likely to run out** within the week, with the reason
+  and how sure Larder is (see Insights). Dismiss one and it stays dismissed.
 
 ## Nutrition
 Choose a person to see each day's energy and nutrients, and every entry. Values come from labels you've confirmed or
@@ -102,7 +104,21 @@ the directions you recorded.
 - Vitamins and supplements count towards that person's nutrition (marked "supplement"); medicines never do. Larder
   only counts the nutrients on the label, and anything else stays unknown.
 
+## Insights
+Settings → Insights on a phone, or Insights in the sidebar. Everything comes from what you've already recorded.
+- **Spending by week**, split into food, pet food and medicines & vitamins, with totals per shop. It uses prices on
+  applied receipts and items added with a price; vouchers taken off the whole basket aren't included. **Table** shows
+  the figures.
+- **Thrown away**: what went in the bin or past its date, valued at the share of what you paid for it, and what you use
+  most often.
+- **What you pay**: price per kg, litre or item for things you've bought at least twice, the cheapest price and where.
+- **Running out**: when things you use regularly will probably run out, shown as a range with a confidence label and
+  the reason ("Got through 4.45 L a week; 2.27 L left"). It needs a couple of weeks of recorded use, or three
+  purchases; until then the item is listed as "still learning". Anything bought on a rhythm but already well stocked
+  isn't pushed onto the shopping list.
+
 ## Settings
+On a phone, Settings also lists the other pages (shopping list, receipts, nutrition, insights, medicines).
 People (allergies, preferences, usual portion), pets (record your vet's feeding plan if you like; Larder gives no
 feeding advice), adults who can sign in, **Connected apps** (read-only tokens for an activity app), your password,
 and, for the administrator, backups, export and server status.

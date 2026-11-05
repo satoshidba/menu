@@ -13,8 +13,8 @@
   bonus for ingredients that need using soon. Richer filters (dietary preference, missing-items budget) are Release 2.
 - **Matching ingredients to foods.** Automatic links are exact name or alias matches only. Anything else creates a new
   food or offers suggestions in review. Near-duplicates are suggested in Settings → Tidy foods and merged by hand.
-- **Trends and forecasting.** Not built yet: the API has price history and the pantry shows paid prices, but there are
-  no consumption, waste or replenishment charts.
+- **Insights.** Forecasts are only as good as what's recorded: households that don't log use get purchase-rhythm
+  forecasts, which are less precise. Seasonality and planned meals aren't taken into account yet.
 - **Offline.** Read views are cached. Edits made offline fail visibly rather than queueing (the queue is Release 2).
 - **Receipts.** Rules cover common UK till formats. Retailer-specific e-receipt layouts (Sainsbury's and Tesco PDFs,
   Lidl Plus, Sparks) go through the same generic parser, with AI as a fallback. Returns are recorded as negative
@@ -28,9 +28,8 @@
 ## Release 2 — convenience and insight
 - Ranked pantry-aware discovery with dietary filters, a "missing at most N items" control and expiry priority.
 - Richer AI adaptations, step-image extraction from video and pages, and labelled AI illustrations.
-- Price trends per standard unit and store, consumption and waste charts, and purchase frequency.
-- Replenishment forecasts shown only after enough history, with the basis and a confidence range; snooze and dismiss
-  already exist on list items.
+- Forecasts that take planned meals into account (uses already on the plan shouldn't be counted twice), and seasonal
+  patterns.
 - An offline edit queue (IndexedDB) with visible sync and conflict resolution using `row_version` and `updated_at`.
 - Better toddler flags: age-aware salt guidance links, and choking-hazard preparation prompts in cooking mode.
 - Alias management beyond merging (rename, split).

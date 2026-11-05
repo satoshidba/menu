@@ -41,6 +41,20 @@ Dark-mode values are defined for the same tokens and follow `prefers-color-schem
 
 Durations are 120–240 ms, and `prefers-reduced-motion` removes them.
 
+### Chart series
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `--series-1` | `#2e7a50` | `#3f9a68` | Food, single-series lines, forecast ranges |
+| `--series-2` | `#bd8226` | `#b07a26` | Pet food, waste bars |
+| `--series-3` | `#5367c9` | `#6c82dc` | Medicines & vitamins |
+
+These were checked with a palette validator against the card surface (`#fffdf9` light, `#212823` dark): lightness
+band, chroma floor, colour-blind separation of adjacent pairs, normal-vision separation, and 3:1 contrast. All pass in
+light mode. In dark mode, food and pet food separate by ΔE 7.7 under deuteranopia, which is in the 6–8 band. That is
+acceptable only with secondary encoding, so stacked bars have a 2 px gap between segments, a legend and a table view.
+Charts keep text in ink tokens, use hairline solid grids, and have hover/focus tooltips. Low-confidence forecast ranges
+are hatched rather than relying on opacity alone.
+
 ## Per-surface choices
 
 - **Recipes**: a large hero image with a deliberate focal point and attribution overlaid, an editorial serif title and
@@ -92,6 +106,7 @@ Phone (390 px), tablet (820 px) and desktop (1280 px) captures of the seven repr
 | Nutrition | ![](screenshots/nutrition-phone.jpg) | ![](screenshots/nutrition-tablet.jpg) | ![](screenshots/nutrition-desktop.jpg) |
 | Plan | ![](screenshots/plan-phone.jpg) | ![](screenshots/plan-tablet.jpg) | ![](screenshots/plan-desktop.jpg) |
 | Medicines & vitamins | ![](screenshots/health-phone.jpg) | ![](screenshots/health-tablet.jpg) | ![](screenshots/health-desktop.jpg) |
+| Insights | ![](screenshots/insights-phone.jpg) | ![](screenshots/insights-tablet.jpg) | ![](screenshots/insights-desktop.jpg) |
 | Design system | ![](screenshots/design-phone.jpg) | ![](screenshots/design-tablet.jpg) | ![](screenshots/design-desktop.jpg) |
 
 **Issues found in review and fixed:**

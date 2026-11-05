@@ -160,3 +160,15 @@ async def test_stocktake_and_merge(client):
     assert any({d["keep"]["name"], d["merge"]["name"]} == {a, b} for d in rows)
     m = await call(client, "merge_foods", merge=b, into=a)
     assert m["kept"] == a and b in m["aliases"]
+
+
+@pytest.mark.anyio
+async def test_insights_and_forecasts(client):
+    tools = {t.name: t for t in (await client.list_tools()).tools}
+    assert tools["get_forecasts"].annotations.read_only_hint is True
+    ins = await call(client, "get_insights", weeks=8)
+    assert {"spending", "waste", "price_trends", "forecasts"} <= set(ins) and ins["spending"]["basis"]
+    fc = await call(client, "get_forecasts")
+    for f in fc["forecasts"]:  # every forecast is a range with its basis and confidence
+        assert f["earliest"] <= f["run_out"] <= f["latest"] and f["basis"] and f["confidence"] in ("low", "medium", "high")
+    assert "learning" in fc and fc["basis"]

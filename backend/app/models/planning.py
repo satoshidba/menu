@@ -93,7 +93,7 @@ class ShoppingListItem(IdMixin, TimestampMixin, Base):
     unit: Mapped[str | None] = mapped_column(String(16))
     base_quantity: Mapped[float | None] = mapped_column(Float)
     base_unit: Mapped[str | None] = mapped_column(String(8))
-    origin: Mapped[str] = mapped_column(String(16), default="manual")  # manual | plan | low_stock
+    origin: Mapped[str] = mapped_column(String(16), default="manual")  # manual | plan | low_stock | forecast
     reason: Mapped[str | None] = mapped_column(Text)  # human-readable why
     source_plan_ids: Mapped[list[uuid.UUID]] = mapped_column(ARRAY(UUID(as_uuid=True)), default=list)
     aisle: Mapped[str | None] = mapped_column(String(60))

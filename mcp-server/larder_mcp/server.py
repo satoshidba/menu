@@ -320,6 +320,33 @@ async def get_price_history(ctx: Context, item: Annotated[str, Field(description
 
 
 @mcp.tool(annotations=READ)
+async def get_insights(ctx: Context, weeks: Annotated[int, Field(ge=4, le=52, description="Period in weeks")] = 12) -> dict:
+    """Household overview for a period: weekly spending (food / pet / medicines), what was used and thrown away (with
+    value), unit-price trends with the cheapest shops, and run-out forecasts. Each section states its basis; quote it
+    rather than overstating certainty."""
+    c = client(ctx)
+    d = await c.get("/insights", weeks=weeks)
+    sp, u = d["spending"], d["usage"]
+    return {
+        "spending": {k: sp[k] for k in ("total_pence", "average_week_pence", "previous_period_pence", "by_store", "unpriced_purchases", "basis")}
+                    | {"weeks": [w for w in sp["weeks"] if w["total"]]},
+        "waste": {k: u[k] for k in ("wasted_value_pence", "used_value_pence", "waste_share", "top_wasted", "unpriced_waste_events", "basis")},
+        "used_most": u["top_used"],
+        "price_trends": [{k: t[k] for k in ("name", "standard_unit", "latest", "earlier_median", "change_pct", "lowest", "stores")}
+                         for t in d["price_trends"]],
+        "forecasts": d["forecast"]["forecasts"],
+    }
+
+
+@mcp.tool(annotations=READ)
+async def get_forecasts(ctx: Context) -> dict:
+    """When regularly used foods are likely to run out (or are usually rebought), each with a date range, a confidence
+    label and the basis. Foods without enough history are listed under 'learning' and have no forecast. Present ranges,
+    not single dates, and mention the confidence."""
+    return await client(ctx).get("/insights/forecasts")
+
+
+@mcp.tool(annotations=READ)
 async def list_people(ctx: Context) -> list[dict]:
     """Household members (adults and children) with allergies, dislikes, dietary preferences and usual portion."""
     c = client(ctx)

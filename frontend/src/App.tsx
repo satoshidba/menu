@@ -19,6 +19,8 @@ import Nutrition from "./screens/Nutrition";
 import Settings from "./screens/Settings";
 import DesignSystem from "./screens/DesignSystem";
 import Health from "./screens/Health";
+import Insights from "./screens/Insights";
+import { MORE, NAV } from "./lib/nav";
 import Stocktake from "./screens/Stocktake";
 
 export default function App() {
@@ -61,25 +63,13 @@ function AppRoutes() {
       <Route path="/receipts/:id" element={<ReceiptReview />} />
       <Route path="/nutrition" element={<Nutrition />} />
       <Route path="/health" element={<Health />} />
+      <Route path="/insights" element={<Insights />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-const NAV = [
-  { to: "/", label: "Today", icon: "today", end: true },
-  { to: "/recipes", label: "Recipes", icon: "book" },
-  { to: "/pantry", label: "Pantry", icon: "jar" },
-  { to: "/plan", label: "Plan", icon: "plan" },
-];
-const MORE = [
-  { to: "/shopping", label: "Shopping list", icon: "cart" },
-  { to: "/receipts", label: "Receipts", icon: "receipt" },
-  { to: "/nutrition", label: "Nutrition", icon: "chart" },
-  { to: "/health", label: "Medicines & vitamins", icon: "pill" },
-  { to: "/settings", label: "Settings", icon: "settings" },
-];
 
 export function Wordmark() {
   return <Link to="/" className="wordmark" aria-label="Larder home"><Icon name="leaf" size={22} />Larder</Link>;

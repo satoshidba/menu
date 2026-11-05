@@ -82,6 +82,60 @@ PRODUCTS = [
 ]
 
 
+def _seed_history(db, hid, actor, products, foods, dog, t: date) -> None:
+    from .services.stock import EventInput, record_event
+
+    def at(days_ago: int, hour: int = 8) -> datetime:
+        return datetime.combine(t - timedelta(days=days_ago), datetime.min.time(), timezone.utc) + timedelta(hours=hour)
+
+    def bought(prod, food, qty, unit, days_ago, pence, store, loc="fridge"):
+        lot = create_lot(db, hid, product=prod, food=food, quantity=qty, unit=unit, location=loc, store=store,
+                         purchased_on=t - timedelta(days=days_ago), price_paid_pence=pence, actor_user_id=actor, occurred_at=at(days_ago, 17))
+        pur = record_purchase(db, hid, product_id=prod.id if prod else None, food_id=prod.food_id if prod else food.id, store=store,
+                              retailer=store, purchased_at=at(days_ago, 17), quantity_base=lot.initial_quantity_base,
+                              base_unit=lot.base_unit, paid_price_pence=pence, shelf_price_pence=pence, is_pet_food=lot.is_pet_food)
+        lot.purchase_id = pur.id
+        return lot
+
+    def use(lot, qty, days_ago, kind="consumption", reason=None):
+        qty = min(qty, lot.quantity_base)
+        if qty > 0:
+            record_event(db, lot.id, hid, EventInput(type=kind, quantity=qty, unit=lot.base_unit, reason=reason, occurred_at=at(days_ago, 19)),
+                         actor_user_id=actor)
+
+    milk, stores = products["Semi Skimmed Milk"], ["Lidl", "Tesco", "Lidl", "Sainsbury's", "Lidl"]
+    wobble = [1.0, 1.15, 0.9, 1.05, 0.95, 1.1, 0.85]
+    for week in range(10, 0, -1):
+        start = week * 7 + 2
+        # milk: two 4-pint bottles a week, a little over half a litre a day
+        lots = [bought(milk, None, 1, "pack", start, 155 + (week % 3) * 5, stores[week % 5]) for _ in range(2)]
+        for i in range(7):
+            lot = lots[0] if lots[0].quantity_base > 0 else lots[1]
+            use(lot, round(620 * wobble[(i + week) % 7]), start - i - 1)
+        for lot in lots:
+            use(lot, lot.quantity_base, start - 7, "waste", "Past its date")
+        # bananas: a bunch of 8 a week, and the odd one goes brown
+        b = bought(None, foods["Bananas"], 8, "each", start, 120 + (week % 2) * 5, stores[(week + 1) % 5], "cupboard")
+        for i in range(0, 7, 2):
+            use(b, 2, start - i - 1)
+        if week % 3 == 0:
+            use(b, b.quantity_base, start - 7, "waste", "Too ripe")
+        else:
+            use(b, b.quantity_base, start - 7)
+        # spinach every fortnight: half of it tends to get thrown away
+        if week % 2 == 0:
+            sp = bought(None, foods["Spinach"], 200, "g", start, 150, "Lidl")
+            use(sp, 100, start - 2)
+            use(sp, 100, start - 6, "waste", "Wilted")
+    # dog food: a 2 kg bag lasts about a fortnight
+    for days_ago in (66, 52, 38, 24):
+        bag = bought(dog, None, 1, "pack", days_ago, 899 if days_ago > 40 else 949, "Tesco", "other")
+        for d in range(0, 14, 2):
+            use(bag, 290, days_ago - d - 1)
+        use(bag, bag.quantity_base, days_ago - 14)
+    db.flush()
+
+
 def seed_demo() -> dict:
     db = SessionLocal()
     try:
@@ -192,6 +246,8 @@ def seed_demo() -> dict:
                                       package_count=1, quantity_base=lot.initial_quantity_base, base_unit=lot.base_unit,
                                       paid_price_pence=price, shelf_price_pence=price, is_pet_food=lot.is_pet_food)
                 lot.purchase_id = pur.id
+            # Ten weeks of history so Insights and forecasts have something to show
+            _seed_history(db, hid, admin.id, products, foods, dog, t)
             # extra price history for pasta (different stores and a multibuy)
             for days, store, paid, promo in ((70, "Tesco", 95, None), (45, "Sainsbury's", 80, "Nectar price"), (25, "Lidl", 75, None)):
                 record_purchase(db, hid, product_id=products["Farfalle"].id, food_id=foods["Dried pasta"].id, store=store,

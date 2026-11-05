@@ -1,4 +1,6 @@
 import { FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
+import { MORE } from "../lib/nav";
 import Icon from "../components/Icon";
 import { Field, Notice, Sheet, useApi, useToast } from "../components/ui";
 import { api, errorText } from "../lib/api";
@@ -13,6 +15,11 @@ export default function Settings() {
   return (
     <>
       <div className="page-head"><div><div className="eyebrow">{me?.household.name}</div><h1>Settings</h1></div><button className="btn" onClick={signOut}>Sign out</button></div>
+      <nav className="phone-only more-links" aria-label="More">
+        {MORE.filter((m) => m.to !== "/settings").map((m) => (
+          <Link key={m.to} to={m.to} className="list-row"><Icon name={m.icon} /><span className="grow title">{m.label}</span><Icon name="right" size={18} /></Link>
+        ))}
+      </nav>
       <div className="two-col" style={{ alignItems: "start" }}>
         <div className="stack"><People /><Pets /><TidyFoods /></div>
         <div className="stack">

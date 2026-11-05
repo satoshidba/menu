@@ -93,6 +93,7 @@ const SCREENS = [
   ["plan", "/plan"],
   ["health", "/health"],
   ["stocktake", "/pantry/stocktake?location=fridge"],
+  ["insights", "/insights"],
 ];
 
 const b2 = await chromium.launch(launchOpts);

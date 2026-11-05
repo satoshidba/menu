@@ -29,8 +29,11 @@ VISA CONTACTLESS                    £4.97
 04/11/2026 18:32  Receipt No 1234-5678
 `;
 
-const browser = await chromium.launch();
-const ctx0 = await browser.newContext();
+// SHOT_CHROME_ARGS e.g. "--host-resolver-rules=MAP larder.test 127.0.0.1 --no-proxy-server"; SHOT_INSECURE=1 for a private CA
+const launchOpts = { args: process.env.SHOT_CHROME_ARGS ? process.env.SHOT_CHROME_ARGS.match(/--[^-][^]*?(?=\s--|$)/g).map((x) => x.trim()) : [] };
+const insecure = process.env.SHOT_INSECURE === "1";
+const browser = await chromium.launch(launchOpts);
+const ctx0 = await browser.newContext({ ignoreHTTPSErrors: insecure });
 const page0 = await ctx0.newPage();
 const login = await page0.request.post(`${base}/api/v1/auth/login`, { data: { email: "alex@example.com", password: "demo-password-1" } });
 const { csrf_token } = await login.json();
@@ -90,9 +93,9 @@ const SCREENS = [
   ["plan", "/plan"],
 ];
 
-const b2 = await chromium.launch();
+const b2 = await chromium.launch(launchOpts);
 for (const [size, vp] of Object.entries(SIZES)) {
-  const ctx = await b2.newContext({ viewport: vp, deviceScaleFactor: scale, storageState: state, reducedMotion: "reduce", locale: "en-GB", timezoneId: "Europe/London", hasTouch: size !== "desktop" });
+  const ctx = await b2.newContext({ viewport: vp, deviceScaleFactor: scale, storageState: state, reducedMotion: "reduce", locale: "en-GB", ignoreHTTPSErrors: insecure, timezoneId: "Europe/London", hasTouch: size !== "desktop" });
   const page = await ctx.newPage();
   page.on("pageerror", (e) => console.error(`[${size}] page error:`, e.message));
   page.on("console", (m) => { if (m.type() === "error") console.error(`[${size}] console:`, m.text()); });

@@ -135,8 +135,9 @@ jobs:
         working-directory: frontend
         run: |
           npm ci && npm run build
-          nohup npx vite preview --port 4173 --strictPort > /tmp/web.log 2>&1 &
-          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/ > /dev/null && break; sleep 1; done
+          nohup npx vite preview --host 127.0.0.1 --port 4173 --strictPort > /tmp/web.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/api/v1/health > /dev/null && exit 0; sleep 1; done
+          echo "web app did not start"; exit 1
       - name: Browser tests
         working-directory: e2e
         run: |

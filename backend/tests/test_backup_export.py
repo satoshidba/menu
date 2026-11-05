@@ -38,7 +38,12 @@ def test_backup_and_restore_round_trip(client, passphrase):
     client.delete(f"/api/v1/recipes/{r['id']}")
     assert client.get(f"/api/v1/recipes/{r['id']}").status_code == 404
     manifest = restore_backup(path, passphrase or None)
-    assert manifest["alembic_revision"] == "0002"
+    from alembic.script import ScriptDirectory
+    from alembic.config import Config
+    from pathlib import Path
+    cfg = Config(str(Path(__file__).resolve().parent.parent / "alembic.ini"))
+    cfg.set_main_option("script_location", str(Path(__file__).resolve().parent.parent / "migrations"))
+    assert manifest["alembic_revision"] == ScriptDirectory.from_config(cfg).get_current_head()
     # sessions were restored too; log in again to be safe
     from tests.conftest import PASSWORD, _client, login
     c = login(_client(), "a@example.com", PASSWORD)

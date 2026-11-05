@@ -1,0 +1,42 @@
+{
+ "pasta.jpg": {
+  "title": "File:Roasted Chicken Penne Asiago (3374729447).jpg",
+  "author": "Geoff Peters from Vancouver, BC, Canada",
+  "license": "CC BY 2.0",
+  "license_url": "https://creativecommons.org/licenses/by/2.0",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Roasted_Chicken_Penne_Asiago_(3374729447).jpg",
+  "attribution": "Geoff Peters from Vancouver, BC, Canada, CC BY 2.0, via Wikimedia Commons",
+  "focal_x": 0.55,
+  "focal_y": 0.55
+ },
+ "dal.jpg": {
+  "title": "File:Lal Masoor Dal and Palak.JPG",
+  "author": "Miansari66",
+  "license": "CC0",
+  "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Lal_Masoor_Dal_and_Palak.JPG",
+  "attribution": "Miansari66, CC0, via Wikimedia Commons",
+  "focal_x": 0.5,
+  "focal_y": 0.5
+ },
+ "porridge.jpg": {
+  "title": "File:Banana oatmeal.jpg",
+  "author": "Shisma",
+  "license": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Banana_oatmeal.jpg",
+  "attribution": "Shisma, CC BY 4.0, via Wikimedia Commons",
+  "focal_x": 0.5,
+  "focal_y": 0.62
+ },
+ "frittata.jpg": {
+  "title": "File:Frittata - Bam's Kitchen 2024-04-02.jpg",
+  "author": "Andy Li",
+  "license": "CC0",
+  "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+  "source_url": "https://commons.wikimedia.org/wiki/File:Frittata_-_Bam%27s_Kitchen_2024-04-02.jpg",
+  "attribution": "Andy Li, CC0, via Wikimedia Commons",
+  "focal_x": 0.5,
+  "focal_y": 0.5
+ }
+}

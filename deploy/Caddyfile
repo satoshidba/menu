@@ -1,0 +1,39 @@
+{
+	# Used for Let's Encrypt registration when LARDER_TLS is an email address; ignored with `tls internal`.
+	email {$LARDER_ACME_EMAIL:admin@localhost}
+}
+
+{$LARDER_SITE_ADDRESS:larder.home.arpa} {
+	# LAN default: Caddy's own certificate authority (install its root on phones/tablets once; see docs/SETUP.md).
+	# For a public domain, set LARDER_TLS to your email address to use Let's Encrypt instead.
+	tls {$LARDER_TLS:internal}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; img-src 'self' blob: data: https://images.openfoodfacts.org https://static.openfoodfacts.org; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
+	# Uploads are capped here as well as in the API.
+	request_body {
+		max_size 20MB
+	}
+
+	handle /api/* {
+		reverse_proxy web:8000
+	}
+
+	handle {
+		root * /srv
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		header /sw.js Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

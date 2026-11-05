@@ -242,7 +242,7 @@ class PersonIn(BaseModel):
     allergies: list[str] = []
     dislikes: list[str] = []
     dietary_preferences: list[str] = []
-    default_portion: float = Field(1.0, gt=0, le=5)
+    default_portion: float | None = Field(None, gt=0, le=5, description="Usual servings eaten; defaults to 1 for adults, 0.5 for children")
     notes: str | None = None
     colour: str | None = None
 
@@ -255,7 +255,9 @@ def list_people(p: Principal = Depends(current_principal), db: Session = Depends
 
 @router.post("/people", status_code=201)
 def create_person(body: PersonIn, p: Principal = Depends(require_user), db: Session = Depends(get_db)):
-    person = PersonProfile(household_id=p.household_id, **body.model_dump())
+    data = body.model_dump()
+    data["default_portion"] = data["default_portion"] or (0.5 if body.kind == "child" else 1.0)
+    person = PersonProfile(household_id=p.household_id, **data)
     db.add(person)
     audit(db, p, "person.created", "person", None, {"name": body.name, "kind": body.kind})
     db.commit()
@@ -266,6 +268,7 @@ def create_person(body: PersonIn, p: Principal = Depends(require_user), db: Sess
 def update_person(person_id: uuid.UUID, body: dict, p: Principal = Depends(require_user), db: Session = Depends(get_db)):
     person = get_owned(db, PersonProfile, person_id, p.household_id, "Person")
     data = PersonIn(**{**person_out(person), **body}).model_dump()
+    data["default_portion"] = data["default_portion"] or (0.5 if data["kind"] == "child" else 1.0)
     for k, v in data.items():
         setattr(person, k, v)
     db.commit()

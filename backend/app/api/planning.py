@@ -11,8 +11,11 @@ from sqlalchemy.orm import Session
 
 from ..auth import Principal, require
 from ..db import get_db
-from ..models import Food, MealPlan, PersonProfile, Product, Recipe, RecipeMedia, RecipeVersion, ShoppingListItem
+from ..auth import audit
+from ..models import (ABSENCE_REASONS, Absence, Food, MealPlan, PersonProfile, Product, Recipe, RecipeMedia, RecipeVersion,
+                      ShoppingListItem)
 from ..services import shopping
+from ..services.absences import (absences_between, apply_to_meal, meal_conflicts, present_people, suggested_servings)
 from ..services.recipes import requirements
 from ..services.units import canonical_unit, uk_display
 from .common import get_owned, iso, sid
@@ -20,11 +23,23 @@ from .common import get_owned, iso, sid
 router = APIRouter(prefix="/api/v1", tags=["planning"])
 
 
-def plan_out(db: Session, mp: MealPlan, with_requirements: bool = False) -> dict:
+def absence_out(a: Absence, names: dict | None = None) -> dict:
+    return {"id": sid(a.id), "person_id": sid(a.person_id), "person_name": (names or {}).get(a.person_id), "start_date": iso(a.start_date),
+            "end_date": iso(a.end_date), "slots": a.slots or [], "all_day": not a.slots, "reason": a.reason, "note": a.note}
+
+
+def _names(db: Session, household_id) -> dict:
+    return {p.id: p.name for p in db.scalars(select(PersonProfile).where(PersonProfile.household_id == household_id))}
+
+
+def plan_out(db: Session, mp: MealPlan, with_requirements: bool = False, absences: list | None = None, names: dict | None = None) -> dict:
+    conflicts = meal_conflicts(db, mp, absences)
+    names = names if names is not None else (_names(db, mp.household_id) if conflicts else {})
     out = {"id": sid(mp.id), "date": iso(mp.date), "slot": mp.slot, "title": mp.title, "servings": mp.servings,
            "recipe_version_id": sid(mp.recipe_version_id), "food_id": sid(mp.food_id), "product_id": sid(mp.product_id),
            "participant_ids": [sid(x) for x in mp.participant_ids or []], "notes": mp.notes, "status": mp.status,
-           "cooked_batch_id": sid(mp.cooked_batch_id), "recipe_id": None, "hero": None}
+           "cooked_batch_id": sid(mp.cooked_batch_id), "recipe_id": None, "hero": None,
+           "away_conflicts": [absence_out(a, names) for a in conflicts] if mp.status == "planned" else []}
     if mp.recipe_version_id:
         v = db.get(RecipeVersion, mp.recipe_version_id)
         if v:
@@ -47,7 +62,10 @@ def get_plan(from_: date | None = Query(None, alias="from"), to: date | None = N
     end = to or start + timedelta(days=6)
     rows = db.scalars(select(MealPlan).where(MealPlan.household_id == p.household_id, MealPlan.date >= start, MealPlan.date <= end)
                       .order_by(MealPlan.date, MealPlan.slot))
-    return {"from": iso(start), "to": iso(end), "meals": [plan_out(db, m) for m in rows]}
+    absences = absences_between(db, p.household_id, start, end)
+    names = _names(db, p.household_id)
+    return {"from": iso(start), "to": iso(end), "meals": [plan_out(db, m, absences=absences, names=names) for m in rows],
+            "absences": [absence_out(a, names) for a in absences]}
 
 
 class PlanIn(BaseModel):
@@ -58,8 +76,8 @@ class PlanIn(BaseModel):
     food_id: uuid.UUID | None = None
     product_id: uuid.UUID | None = None
     title: str | None = None
-    servings: float = Field(4, gt=0, le=100)
-    participant_ids: list[uuid.UUID] = []
+    servings: float | None = Field(None, gt=0, le=100, description="Defaults to the usual portions of the people at home")
+    participant_ids: list[uuid.UUID] | None = Field(None, description="Defaults to everyone not marked away for this meal")
     notes: str | None = None
 
 
@@ -79,8 +97,13 @@ def _resolve(db: Session, p: Principal, body: PlanIn) -> dict:
         data["title"] = data["title"] or get_owned(db, Product, body.product_id, p.household_id, "Product").name
     if not data["title"]:
         raise HTTPException(422, "Choose a recipe or give the meal a name")
-    for pid in body.participant_ids:
-        get_owned(db, PersonProfile, pid, p.household_id, "Person")
+    if body.participant_ids is None:
+        present = present_people(db, p.household_id, body.date, body.slot)
+        data["participant_ids"] = [x.id for x in present]
+    else:
+        present = [get_owned(db, PersonProfile, pid, p.household_id, "Person") for pid in body.participant_ids]
+    if data["servings"] is None:
+        data["servings"] = suggested_servings(present) if present else 1
     return data
 
 
@@ -92,6 +115,88 @@ def add_plan(body: PlanIn, p: Principal = Depends(require("plan:write")), db: Se
     shopping.generate(db, p.household_id)
     db.commit()
     return plan_out(db, mp, with_requirements=True)
+
+
+@router.post("/plan/{plan_id}/apply-absences")
+def apply_absences(plan_id: uuid.UUID, p: Principal = Depends(require("plan:write")), db: Session = Depends(get_db)):
+    """Plan a meal without the people who are away: removes them and reduces servings by their usual portions."""
+    mp = get_owned(db, MealPlan, plan_id, p.household_id, "Meal")
+    result = apply_to_meal(db, mp)
+    if result["changed"]:
+        shopping.generate(db, p.household_id)
+    db.commit()
+    return {**result, "meal": plan_out(db, mp, with_requirements=True)}
+
+
+# ---- absences (who's out) -------------------------------------------------------------------------------------------
+
+class AbsenceIn(BaseModel):
+    person_id: uuid.UUID
+    start_date: date
+    end_date: date | None = None
+    slots: list[str] = Field([], description="Meals missed, e.g. ['dinner']; empty = all day")
+    reason: str = Field("other", description="social | work | study | travel | other")
+    note: str | None = Field(None, max_length=200)
+
+
+def _check_absence(db: Session, p: Principal, body: AbsenceIn) -> dict:
+    get_owned(db, PersonProfile, body.person_id, p.household_id, "Person")
+    end = body.end_date or body.start_date
+    if end < body.start_date:
+        raise HTTPException(422, "The end date is before the start date")
+    if (end - body.start_date).days > 366:
+        raise HTTPException(422, "Absences can be up to a year long")
+    bad = set(body.slots) - {"breakfast", "lunch", "dinner", "snack"}
+    if bad:
+        raise HTTPException(422, f"Unknown meal: {', '.join(sorted(bad))}")
+    if body.reason not in ABSENCE_REASONS:
+        raise HTTPException(422, f"Reason should be one of: {', '.join(ABSENCE_REASONS)}")
+    return {**body.model_dump(), "end_date": end, "slots": sorted(set(body.slots), key=["breakfast", "lunch", "dinner", "snack"].index)}
+
+
+def _affected(db: Session, household_id, a: Absence) -> list[dict]:
+    rows = db.scalars(select(MealPlan).where(MealPlan.household_id == household_id, MealPlan.status == "planned",
+                                             MealPlan.date >= a.start_date, MealPlan.date <= a.end_date))
+    return [{"id": sid(m.id), "date": iso(m.date), "slot": m.slot, "title": m.title, "servings": m.servings}
+            for m in rows if a.covers(m.date, m.slot) and a.person_id in (m.participant_ids or [])]
+
+
+@router.get("/absences")
+def list_absences(from_: date | None = Query(None, alias="from"), to: date | None = None, person_id: uuid.UUID | None = None,
+                  p: Principal = Depends(require("plan:read")), db: Session = Depends(get_db)):
+    start = from_ or date.today()
+    end = to or start + timedelta(days=60)
+    rows = [a for a in absences_between(db, p.household_id, start, end) if person_id is None or a.person_id == person_id]
+    names = _names(db, p.household_id)
+    return [absence_out(a, names) for a in rows]
+
+
+@router.post("/absences", status_code=201)
+def create_absence(body: AbsenceIn, p: Principal = Depends(require("plan:write")), db: Session = Depends(get_db)):
+    """Mark someone away. The response lists planned meals that include them, so they can be updated."""
+    a = Absence(household_id=p.household_id, created_by_id=p.user_id, **_check_absence(db, p, body))
+    db.add(a)
+    db.flush()
+    audit(db, p, "absence.created", "absence", a.id, {"reason": a.reason})
+    db.commit()
+    return {"absence": absence_out(a, _names(db, p.household_id)), "affected_meals": _affected(db, p.household_id, a)}
+
+
+@router.patch("/absences/{absence_id}")
+def update_absence(absence_id: uuid.UUID, body: AbsenceIn, p: Principal = Depends(require("plan:write")), db: Session = Depends(get_db)):
+    a = get_owned(db, Absence, absence_id, p.household_id, "Absence")
+    for k, v in _check_absence(db, p, body).items():
+        setattr(a, k, v)
+    db.commit()
+    return {"absence": absence_out(a, _names(db, p.household_id)), "affected_meals": _affected(db, p.household_id, a)}
+
+
+@router.delete("/absences/{absence_id}")
+def delete_absence(absence_id: uuid.UUID, p: Principal = Depends(require("plan:write")), db: Session = Depends(get_db)):
+    a = get_owned(db, Absence, absence_id, p.household_id, "Absence")
+    db.delete(a)
+    db.commit()
+    return {"ok": True}
 
 
 @router.get("/plan/{plan_id}")

@@ -63,7 +63,12 @@ def today(p: Principal = Depends(require("pantry:read")), db: Session = Depends(
     week_end = t + timedelta(days=6)
     planned = db.scalar(select(func.count()).select_from(MealPlan).where(MealPlan.household_id == p.household_id,
                                                                        MealPlan.date >= t, MealPlan.date <= week_end))
+    from ..services.absences import absences_between
+    from .planning import _names, absence_out
+    names = _names(db, p.household_id)
+    away_today = [absence_out(a, names) for a in absences_between(db, p.household_id, t, t + timedelta(days=1))]
     return {"date": iso(t), "next_meal": plan_out(db, nxt, with_requirements=True) if nxt else None, "use_soon": use_soon[:12],
+            "away": away_today,
             "low_stock": low[:12], "ideas": ideas, "planned_this_week": planned,
             "counts": {"recipes": db.scalar(select(func.count()).select_from(Recipe).where(Recipe.household_id == p.household_id)),
                        "pantry_lots": db.scalar(select(func.count()).select_from(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.status == "active"))}}

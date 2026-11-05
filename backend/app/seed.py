@@ -12,7 +12,7 @@ from sqlalchemy import func, select
 
 from .auth import hash_password
 from .db import SessionLocal
-from .models import (Food, Household, MealPlan, PersonProfile, PetProfile, Product, Recipe, RecipeMedia, User)
+from .models import (Absence, Food, Household, MealPlan, PersonProfile, PetProfile, Product, Recipe, RecipeMedia, User)
 from .services import cofid
 from .services.prices import record_purchase
 from .services.recipes import IngredientIn, RecipeContent, StepIn, build_version
@@ -22,10 +22,10 @@ SEED_DIR = Path(__file__).resolve().parent / "seed"
 
 RECIPES = [
     {
-        "title": "Tomato, spinach and chicken farfalle", "servings": 4, "prep": 10, "cook": 20, "cuisine": "Italian",
+        "title": "Chicken and spinach pasta with tomato", "servings": 4, "prep": 10, "cook": 20, "cuisine": "Italian",
         "tags": ["weeknight", "family"], "image": "pasta.jpg",
         "description": "A quick tomato sauce with wilted spinach and pan-fried chicken. Mild enough for small children.",
-        "ingredients": [("500 g dried pasta (farfalle)", "Dried pasta", 500, "g"), ("2 chicken breasts, diced", "Chicken breast", 300, "g"),
+        "ingredients": [("500 g dried pasta (penne or farfalle)", "Dried pasta", 500, "g"), ("2 chicken breasts, diced", "Chicken breast", 300, "g"),
                         ("1 tbsp olive oil", "Olive oil", 1, "tbsp"), ("1 onion, finely chopped", "Onion", 1, "each"),
                         ("2 cloves garlic, crushed", "Garlic", 6, "g"), ("400 g tin chopped tomatoes", "Chopped tomatoes (tinned)", 400, "g"),
                         ("100 g spinach", "Spinach", 100, "g"), ("30 g Parmesan, grated, to serve", "Parmesan", 30, "g")],
@@ -59,14 +59,14 @@ RECIPES = [
         "timers": [None, 360, None],
     },
     {
-        "title": "Broccoli and cheddar frittata", "servings": 4, "prep": 10, "cook": 20, "cuisine": "British", "tags": ["vegetarian", "lunch"],
+        "title": "Broccoli, tomato and cheddar frittata", "servings": 4, "prep": 10, "cook": 20, "cuisine": "British", "tags": ["vegetarian", "lunch"],
         "image": "frittata.jpg", "description": "A thick oven-baked omelette; good cold in lunchboxes.",
         "ingredients": [("6 eggs", "Eggs", 6, "each"), ("150 g broccoli, small florets", "Broccoli", 150, "g"),
-                        ("80 g Cheddar, grated", "Cheddar", 80, "g"), ("1 tbsp olive oil", "Olive oil", 1, "tbsp"),
+                        ("80 g Cheddar, grated", "Cheddar", 80, "g"), ("2 tomatoes, sliced", "Tomatoes", 2, "each"), ("1 tbsp olive oil", "Olive oil", 1, "tbsp"),
                         ("Black pepper, to taste", "Black pepper", None, None)],
         "steps": ["Heat the oven to 190°C (170°C fan). Steam the broccoli for 3 minutes.",
                   "Whisk the eggs with most of the cheese.",
-                  "Heat the oil in an ovenproof pan, add the broccoli and pour in the eggs. Scatter over the remaining cheese.",
+                  "Heat the oil in an ovenproof pan, add the broccoli and pour in the eggs. Lay the tomato slices on top and scatter over the remaining cheese.",
                   "Bake for 15–18 minutes until set all the way through."],
         "timers": [180, None, None, 1020],
     },
@@ -75,7 +75,7 @@ RECIPES = [
 PRODUCTS = [
     # name, brand, food, size, unit, location, nutrition per 100 (label, verified), min stock
     ("Farfalle", "Store brand", "Dried pasta", 500, "g", "cupboard",
-     {"energy_kcal": 359, "fat_g": 2.0, "saturates_g": 0.5, "carbohydrate_g": 70.0, "sugars_g": 3.5, "fibre_g": 3.0, "protein_g": 12.5, "salt_g": 0.01}, 500),
+     {"energy_kcal": 359, "fat_g": 2.0, "saturates_g": 0.5, "carbohydrate_g": 70.0, "sugars_g": 3.5, "fibre_g": 3.0, "protein_g": 12.5, "salt_g": 0.01}, None),
     ("Chopped Tomatoes", "Store brand", "Chopped tomatoes (tinned)", 400, "g", "cupboard", None, 400),
     ("Semi Skimmed Milk", "Store brand", "Semi-skimmed milk", 2272, "ml", "fridge", None, 1000),
     ("Free Range Eggs x6", "Store brand", "Eggs", 6, "each", "fridge", None, 6),
@@ -131,6 +131,9 @@ def seed_demo() -> dict:
                 _map_cofid(db, p, f, sf["cofid_code"])
             foods[f.name] = f
         foods["Dried pasta"].min_stock_base = 500
+        # A household-confirmed per-item weight (sample value) so banana counts convert; eggs are left unconfirmed
+        # to show how unknown nutrition is reported.
+        foods["Bananas"].each_weight_g, foods["Bananas"].each_weight_confirmed = 100.0, True
         db.flush()
 
         products = {}
@@ -221,14 +224,26 @@ def seed_demo() -> dict:
                     db.add(m)
                     db.flush()
                     r.hero_media_id = m.id
-                if spec["title"].startswith("Tomato"):
+                if spec["title"].startswith("Chicken"):
                     pasta_version = v
             people = list(db.scalars(select(PersonProfile).where(PersonProfile.household_id == hid)))
             db.add(MealPlan(household_id=hid, date=t, slot="dinner", recipe_version_id=pasta_version.id, title=pasta_version.title,
-                            servings=4, participant_ids=[x.id for x in people]))
+                            servings=3, participant_ids=[x.id for x in people]))
             db.add(MealPlan(household_id=hid, date=t + timedelta(days=1), slot="breakfast",
                             recipe_version_id=db.scalar(select(Recipe).where(Recipe.title == "Banana porridge")).current_version_id,
-                            title="Banana porridge", servings=4, participant_ids=[x.id for x in people]))
+                            title="Banana porridge", servings=3, participant_ids=[x.id for x in people]))
+            byname = {x.name: x for x in people}
+            dal = db.scalar(select(Recipe).where(Recipe.title.like("Red lentil%")))
+            db.add(MealPlan(household_id=hid, date=t + timedelta(days=3), slot="dinner", recipe_version_id=dal.current_version_id,
+                            title=dal.title, servings=3, participant_ids=[x.id for x in people]))
+            db.add_all([
+                Absence(household_id=hid, person_id=byname["Sam"].id, start_date=t + timedelta(days=1), end_date=t + timedelta(days=1),
+                        slots=["dinner"], reason="social", note="Pub quiz"),
+                Absence(household_id=hid, person_id=byname["Alex"].id, start_date=t + timedelta(days=3), end_date=t + timedelta(days=3),
+                        slots=["dinner"], reason="study", note="Evening class"),
+                Absence(household_id=hid, person_id=byname["Sam"].id, start_date=t + timedelta(days=5), end_date=t + timedelta(days=6),
+                        slots=[], reason="work", note="Conference in Leeds"),
+            ])
         db.commit()
         return {"household_id": str(hid), "admin_email": admin.email,
                 "password": created_users if created_users else "(existing users unchanged)"}

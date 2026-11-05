@@ -1,0 +1,85 @@
+# Larder — self-hosted household food, pantry and nutrition app.
+# Quick start: cp .env.example .env, edit it, then: docker compose up -d --build   (see docs/SETUP.md)
+name: larder
+
+x-app: &app
+  build:
+    context: ./backend
+  image: larder-api:1.0.0
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    LARDER_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-larder}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-larder}
+    LARDER_DATA_DIR: /data
+  volumes:
+    - larder_data:/data
+    - ${LARDER_BACKUP_DIR:-./backups}:/data/backups
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-larder}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-larder}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    <<: *app
+    command: ["web"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  worker:
+    <<: *app
+    command: ["worker"]
+    # Untrusted files (receipts, recipe photos, imported pages) are processed here with capped resources.
+    mem_limit: 1g
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f app.worker >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    image: larder-web:1.0.0
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${LARDER_HTTP_PORT:-80}:80"
+      - "${LARDER_HTTPS_PORT:-443}:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  larder_data:
+  caddy_data:
+  caddy_config:

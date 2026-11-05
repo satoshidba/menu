@@ -12,3 +12,7 @@ data/
 *.tar.gz
 *.enc
 .DS_Store
+
+# backup archives (keep the folder)
+backups/*
+!backups/.gitkeep

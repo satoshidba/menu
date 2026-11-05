@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, IdMixin, TimestampMixin
 
-__all__ = ["MealPlan", "CookedBatch", "MealConsumption", "ShoppingListItem", "MEAL_SLOTS"]
+__all__ = ["MealPlan", "CookedBatch", "MealConsumption", "ShoppingListItem", "Absence", "MEAL_SLOTS", "ABSENCE_REASONS"]
 
 MEAL_SLOTS = ("breakfast", "lunch", "dinner", "snack")
 
@@ -103,3 +103,24 @@ class ShoppingListItem(IdMixin, TimestampMixin, Base):
     user_edited: Mapped[bool] = mapped_column(Boolean, default=False)
     is_pet_food: Mapped[bool] = mapped_column(Boolean, default=False)
     details: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+
+ABSENCE_REASONS = ("social", "work", "study", "travel", "other")
+
+
+class Absence(IdMixin, TimestampMixin, Base):
+    """A person away for some meals between two dates (inclusive). `slots` empty = away for the whole day."""
+
+    __tablename__ = "absence"
+    __table_args__ = (Index("ix_absence_range", "household_id", "start_date", "end_date"),)
+    household_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("household.id", ondelete="CASCADE"))
+    person_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("person_profile.id", ondelete="CASCADE"), index=True)
+    start_date: Mapped[date] = mapped_column(Date)
+    end_date: Mapped[date] = mapped_column(Date)
+    slots: Mapped[list[str]] = mapped_column(ARRAY(String(16)), default=list)  # e.g. ["dinner"]; [] = all meals
+    reason: Mapped[str] = mapped_column(String(16), default="other")
+    note: Mapped[str | None] = mapped_column(String(200))
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("user_account.id", ondelete="SET NULL"))
+
+    def covers(self, d: date, slot: str) -> bool:
+        return self.start_date <= d <= self.end_date and (not self.slots or slot in self.slots)

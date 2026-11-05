@@ -10,6 +10,11 @@ config.set_main_option("sqlalchemy.url", get_settings().database_url)
 target_metadata = Base.metadata
 
 
+def include_object(obj, name, type_, reflected, compare_to):
+    # Trigram indexes and triggers are managed by hand in 0002_invariants.
+    return not (type_ == "index" and name and name.endswith("_trgm"))
+
+
 def run_migrations_offline():
     context.configure(url=config.get_main_option("sqlalchemy.url"), target_metadata=target_metadata, literal_binds=True)
     with context.begin_transaction():
@@ -19,7 +24,7 @@ def run_migrations_offline():
 def run_migrations_online():
     connectable = engine_from_config(config.get_section(config.config_ini_section), prefix="sqlalchemy.", poolclass=pool.NullPool)
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True, include_object=include_object)
         with context.begin_transaction():
             context.run_migrations()
 

@@ -21,13 +21,18 @@ a UK household (two adults, two toddlers, one dog): UK English, GBP, metric unit
   batch, the pantry deductions, each person's actual portion, leftovers and waste.
 - **Pantry**: scan a barcode (Open Food Facts lookup, confirmed by you) or add loose items. Each lot keeps its own
   dates and prices, and every change goes through an append-only stock ledger. Use-by and best-before are shown
-  exactly as the label words them.
+  exactly as the label words them. A guided stocktake counts one cupboard, fridge or freezer at a time, and
+  near-duplicate foods can be merged.
 - **Receipts**: photo, PDF, screenshot, e-mail or pasted text, read by OCR and rules (AI optional). You review it line
   by line in a ledger. Applying is idempotent, and duplicates are detected. Shelf price and price actually paid are
   both recorded.
 - **Plan, shopping and "who's out"**: a week view. The shopping list is planned meals minus usable stock, respecting
   use-by dates. Mark people as out for meals (socialising, work, study, travel): new meals default to whoever is home
-  with servings from their usual portions, and planned meals offer "plan without them".
+  with servings from their usual portions, and planned meals offer "plan without them". Weekly repeats (an evening
+  class) and a subscribable calendar feed.
+- **Insights**: weekly spending by food, pet food and medicines; what gets thrown away and what it cost; price per
+  kg/L/item over time and the cheapest shops; and run-out forecasts shown as a range, with a confidence label and the
+  reason. Forecasts appear only after enough history, and likely run-outs join the shopping list.
 - **Nutrition**: CoFID and label data with provenance. Per-serving and per-person intake snapshots. Unknown is never
   counted as zero. JSON and CSV export, plus scoped read-only tokens for an activity app.
 - **Medicines & vitamins**: a cabinet for vitamins, protein powder and medicines with stock and expiry dates, the

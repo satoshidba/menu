@@ -46,6 +46,9 @@ intake.
   **Mark opened**, plus its history and the prices you've paid. Every change is kept in the history.
 - **Remind me below** sets a minimum so it shows up as running low.
 - **Pet food** is a separate list. It never counts towards anyone's nutrition.
+- **Stocktake** counts one place at a time (cupboard, fridge, freezer, other). Leave a line blank if it's right, type
+  what you actually find, or tick **Not here**. Saving records the differences as corrections, so nothing is
+  rewritten and the history shows the count. Today reminds you about a place that hasn't been counted for a month.
 
 ## Receipts
 **Add a receipt**: photograph a till receipt, or upload a PDF or e-mail receipt, a Lidl Plus or Sparks screenshot, or
@@ -103,3 +106,7 @@ the directions you recorded.
 People (allergies, preferences, usual portion), pets (record your vet's feeding plan if you like; Larder gives no
 feeding advice), adults who can sign in, **Connected apps** (read-only tokens for an activity app), your password,
 and, for the administrator, backups, export and server status.
+
+**Tidy foods** lists foods that look like duplicates ("Spaghetti" and "Spaghetti dried", "Cheddar" and "Mature
+cheddar"). Merging moves the stock, history, recipe links, prices and nutrition onto the food you keep, and keeps the
+other name as an alias so receipts and imports still match it.

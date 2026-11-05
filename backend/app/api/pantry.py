@@ -360,3 +360,76 @@ def consistency(p: Principal = Depends(require("pantry:read")), db: Session = De
                       .where(PantryLot.household_id == p.household_id).group_by(PantryLot.id)).all()
     bad = [{"lot_id": str(r[0]), "projection": r[1], "ledger": r[2]} for r in rows if abs(r[1] - r[2]) > 1e-6]
     return {"lots_checked": len(rows), "mismatches": bad}
+
+
+# ---- stocktake ---------------------------------------------------------------------------------------------------------
+
+def _last_counted(db: Session, household_id) -> dict:
+    from ..models import AuditEvent
+    rows = db.scalars(select(AuditEvent).where(AuditEvent.household_id == household_id, AuditEvent.action == "pantry.stocktake")
+                      .order_by(AuditEvent.at.desc()).limit(50))
+    out: dict[str, str] = {}
+    for a in rows:
+        loc = (a.details or {}).get("location")
+        if loc and loc not in out:
+            out[loc] = a.at.isoformat()
+    return out
+
+
+@router.get("/stocktake")
+def stocktake_sheet(location: str = Query(pattern="^(cupboard|fridge|freezer|other)$"), p: Principal = Depends(require("pantry:read")),
+                    db: Session = Depends(get_db)):
+    """Everything recorded in one location, to count against."""
+    lots = list(db.scalars(select(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.location == location,
+                                                   PantryLot.status == "active", not_health())))
+    rows = []
+    for lot in lots:
+        prod, food = lot.product, lot.food
+        rows.append({**lot_out(lot), "name": prod.name if prod else food.name, "brand": prod.brand if prod else None,
+                     "pack_base_quantity": prod.package_base_quantity if prod else None})
+    rows.sort(key=lambda r: (r["name"].lower(), r["relevant_date"] or ""))
+    return {"location": location, "lots": rows, "last_counted": _last_counted(db, p.household_id)}
+
+
+class CountIn(BaseModel):
+    lot_id: uuid.UUID
+    counted_quantity: float = Field(ge=0)
+    unit: str | None = None
+
+
+class StocktakeIn(BaseModel):
+    location: str = Field(pattern="^(cupboard|fridge|freezer|other)$")
+    counts: list[CountIn] = []
+    not_found: list[uuid.UUID] = Field([], description="Lots that weren't there; set to zero")
+    reason: str | None = None
+    idempotency_key: str | None = Field(None, max_length=100)
+
+
+@router.post("/stocktake")
+def apply_stocktake(body: StocktakeIn, p: Principal = Depends(require("pantry:write")), db: Session = Depends(get_db)):
+    """Apply a count: every difference becomes a correction event (history kept); unlisted lots are left alone."""
+    reason = body.reason or f"Stocktake ({body.location}, {date.today():%d/%m/%Y})"
+    changed, unchanged, removed = [], 0, []
+    key = body.idempotency_key
+    for c in body.counts:
+        lot = get_owned(db, PantryLot, c.lot_id, p.household_id, "Lot")
+        unit = canonical_unit(c.unit) if c.unit else lot.base_unit
+        before = lot.quantity_base
+        ev = record_event(db, lot.id, p.household_id, EventInput(type="correction", new_quantity=c.counted_quantity, unit=unit or lot.base_unit,
+                                                                 reason=reason, idempotency_key=f"{key}:{lot.id}" if key else None), actor_user_id=p.user_id)
+        if abs(ev.delta_base) < 1e-9:
+            unchanged += 1
+        else:
+            changed.append({"lot_id": str(lot.id), "before": uk_display(before, lot.base_unit), "after": uk_display(lot.quantity_base, lot.base_unit)})
+    for lot_id in body.not_found:
+        lot = get_owned(db, PantryLot, lot_id, p.household_id, "Lot")
+        if lot.quantity_base > 1e-9:
+            record_event(db, lot.id, p.household_id, EventInput(type="correction", new_quantity=0, unit=lot.base_unit,
+                                                                reason=f"{reason}: not found", idempotency_key=f"{key}:{lot.id}:nf" if key else None),
+                         actor_user_id=p.user_id)
+            removed.append(str(lot.id))
+    from ..auth import audit as _audit
+    _audit(db, p, "pantry.stocktake", "pantry", None, {"location": body.location, "changed": len(changed), "unchanged": unchanged,
+                                                      "not_found": len(removed)})
+    db.commit()
+    return {"location": body.location, "changed": changed, "unchanged": unchanged, "not_found": removed}

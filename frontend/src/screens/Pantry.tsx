@@ -89,6 +89,7 @@ export default function Pantry() {
         <div><div className="eyebrow">{pet ? "Pet food — kept separate from human meals" : "Pantry"}</div><h1>{pet ? "Dog's food" : "What we have"}</h1></div>
         <div className="row-wrap">
           <Link className="btn primary" to="/pantry/scan"><Icon name="scan" />Scan or add</Link>
+          {!pet && <Link className="btn" to={`/pantry/stocktake?location=${loc === "all" ? "fridge" : loc}`}><Icon name="check" />Stocktake</Link>}
           <button className="btn" onClick={() => { setPet(!pet); setOpenKey(null); }}><Icon name={pet ? "jar" : "paw"} />{pet ? "Household pantry" : "Pet food"}</button>
         </div>
       </div>

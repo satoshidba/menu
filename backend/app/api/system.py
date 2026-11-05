@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
@@ -75,9 +75,25 @@ def today(p: Principal = Depends(require("pantry:read")), db: Session = Depends(
     return {"date": iso(t), "next_meal": plan_out(db, nxt, with_requirements=True) if nxt else None, "use_soon": use_soon[:12],
             "away": away_today,
             "health": _health_summary(db, p),
+            "stocktake_due": _stocktake_due(db, p),
             "low_stock": low[:12], "ideas": ideas, "planned_this_week": planned,
             "counts": {"recipes": db.scalar(select(func.count()).select_from(Recipe).where(Recipe.household_id == p.household_id)),
                        "pantry_lots": db.scalar(select(func.count()).select_from(PantryLot).where(PantryLot.household_id == p.household_id, PantryLot.status == "active"))}}
+
+
+def _stocktake_due(db: Session, p: Principal) -> list[dict]:
+    """Locations with stock that haven't been counted for 30 days (or ever)."""
+    from .pantry import _last_counted
+    last = _last_counted(db, p.household_id)
+    locs = {r[0] for r in db.execute(select(PantryLot.location).where(PantryLot.household_id == p.household_id, PantryLot.status == "active",
+                                                                      not_health()).distinct())}
+    out = []
+    for loc in sorted(locs):
+        when = last.get(loc)
+        days = (utcnow() - datetime.fromisoformat(when)).days if when else None
+        if days is None or days >= 30:
+            out.append({"location": loc, "days_since": days})
+    return out
 
 
 def _health_summary(db: Session, p: Principal) -> dict | None:

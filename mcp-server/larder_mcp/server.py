@@ -597,6 +597,70 @@ async def adjust_stock(ctx: Context, lot_id: str, action: Literal["move", "corre
     return {"lot_id": lot_id, "now": r["lot"]["display"], "location": r["lot"]["location"], "event": r["event"]["type"]}
 
 
+@mcp.tool(annotations=WRITE)
+async def record_stocktake(ctx: Context, location: Literal["cupboard", "fridge", "freezer", "other"],
+                           counts: Annotated[dict[str, float], Field(description="What the user counted, by item name or lot_id, in the item's base unit (g, ml or each), e.g. {'Yogurt': 300, 'Eggs': 4}")],
+                           not_found: Annotated[list[str], Field(description="Items the user says aren't there any more")] = []) -> dict:
+    """Apply a stocktake for one location the user has counted. Differences become correction events (history kept);
+    items not mentioned are left alone. Confirm the numbers with the user first."""
+    c = client(ctx)
+    sheet = await c.get("/pantry/stocktake", location=location)
+    lots = sheet["lots"]
+
+    def find(key: str) -> list[dict]:
+        if is_id(key):
+            return [l for l in lots if l["id"] == key]
+        exact = [l for l in lots if l["name"].lower() == key.strip().lower()]
+        return exact or [l for l in lots if key.strip().lower() in l["name"].lower()]
+
+    body_counts, missing, problems = [], [], []
+    for key, qty in counts.items():
+        m = find(key)
+        if not m:
+            problems.append(f"'{key}' isn't recorded in the {location}")
+        elif len(m) > 1:
+            # several lots of the same item: put the count on the earliest-dated lot and zero the rest
+            m = sorted(m, key=lambda l: l["relevant_date"] or "9999")
+            body_counts.append({"lot_id": m[0]["id"], "counted_quantity": qty})
+            body_counts += [{"lot_id": l["id"], "counted_quantity": 0} for l in m[1:]]
+        else:
+            body_counts.append({"lot_id": m[0]["id"], "counted_quantity": qty})
+    for key in not_found:
+        missing += [l["id"] for l in find(key)] or []
+    if problems and not body_counts and not missing:
+        raise ToolError("; ".join(problems))
+    r = await c.post("/pantry/stocktake", {"location": location, "counts": body_counts, "not_found": missing, "idempotency_key": f"mcp-{uuid.uuid4()}"})
+    return {**r, "not_matched": problems,
+            "recorded_but_not_counted": [l["name"] for l in lots if l["id"] not in {x["lot_id"] for x in body_counts} and l["id"] not in missing]}
+
+
+@mcp.tool(annotations=READ)
+async def find_duplicate_foods(ctx: Context) -> list[dict]:
+    """Likely duplicate generic foods (e.g. 'Spinach' and 'Baby spinach'), with how often each is used."""
+    c = client(ctx)
+    return await c.get("/foods/duplicates")
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=False, open_world_hint=False))
+async def merge_foods(ctx: Context, merge: Annotated[str, Field(description="Food to merge away (name or id)")],
+                      into: Annotated[str, Field(description="Food to keep (name or id)")]) -> dict:
+    """Merge one generic food into another after the user agrees: stock, products, recipe links, plans, list and prices
+    move to the kept food and the other name becomes an alias. This can't be undone automatically."""
+    c = client(ctx)
+
+    async def food_id(x: str) -> str:
+        if is_id(x):
+            return x
+        foods = await c.get("/foods", q=x, limit=10)
+        exact = [f for f in foods if f["name"].lower() == x.strip().lower()]
+        if not exact:
+            raise ToolError(f"No food named exactly '{x}'. Candidates: {', '.join(f['name'] for f in foods) or 'none'}")
+        return exact[0]["id"]
+
+    r = await c.post(f"/foods/{await food_id(merge)}/merge", {"into_food_id": await food_id(into)})
+    return {"kept": r["kept"]["name"], "aliases": r["kept"]["aliases"], "merged": r["merged"], "moved": r["moved"]}
+
+
 # ---- planning, absences, shopping -------------------------------------------------------------------------------------------
 
 @mcp.tool(annotations=WRITE)

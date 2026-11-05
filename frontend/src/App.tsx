@@ -19,6 +19,7 @@ import Nutrition from "./screens/Nutrition";
 import Settings from "./screens/Settings";
 import DesignSystem from "./screens/DesignSystem";
 import Health from "./screens/Health";
+import Stocktake from "./screens/Stocktake";
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ function AppRoutes() {
       <Route path="/recipes/:id" element={<RecipeDetail />} />
       <Route path="/pantry" element={<Pantry />} />
       <Route path="/pantry/scan" element={<Scan />} />
+      <Route path="/pantry/stocktake" element={<Stocktake />} />
       <Route path="/plan" element={<Plan />} />
       <Route path="/shopping" element={<Shopping />} />
       <Route path="/receipts" element={<Receipts />} />
@@ -84,7 +86,7 @@ export function Wordmark() {
 }
 
 function contextualAction(path: string): { to: string; label: string; icon: string } | null {
-  if (path.startsWith("/recipes/new") || path.startsWith("/pantry/scan") || /^\/receipts\/.+/.test(path)) return null;
+  if (path.startsWith("/recipes/new") || path.startsWith("/pantry/scan") || path.startsWith("/pantry/stocktake") || /^\/receipts\/.+/.test(path)) return null;
   if (path.startsWith("/recipes")) return { to: "/recipes/new", label: "Add recipe", icon: "plus" };
   if (path.startsWith("/receipts")) return { to: "/receipts?upload=1", label: "Review receipt", icon: "receipt" };
   if (path.startsWith("/shopping") || path.startsWith("/plan")) return { to: "/pantry/scan", label: "Scan item", icon: "scan" };

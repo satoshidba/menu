@@ -105,7 +105,8 @@ Items, recipes and people can be named ("spinach", "Banana porridge", "Sam"); id
 | Overview | `get_today` (next meal, use-soon, low stock, who's out, ideas) |
 | Recipes | `find_recipes` (search or rank by what's in stock), `get_recipe` (scaled, with stock status and "check before serving"), `get_recipe_nutrition` |
 | Recipe drafts | `import_recipe` (URL or text → draft), `suggest_recipe` (AI idea from stock → draft), `save_recipe`, `propose_recipe_change` (draft version + diff), `accept_recipe_change`, `discard_recipe_change` |
-| Pantry | `get_pantry`, `get_use_soon`, `lookup_barcode`, `search_foods`, `add_to_pantry`, `use_from_pantry` (earliest dates first, never below zero), `adjust_stock` (move, correct count, mark opened), `get_price_history` |
+| Pantry | `get_pantry`, `get_use_soon`, `lookup_barcode`, `search_foods`, `add_to_pantry`, `use_from_pantry` (earliest dates first, never below zero), `adjust_stock` (move, correct count, mark opened), `get_price_history`, `record_stocktake` (count one location; differences become corrections) |
+| Tidying | `find_duplicate_foods`, `merge_foods` (destructive; moves everything to the food kept and keeps the old name as an alias) |
 | Plan and who's out | `get_week_plan` (meals + absences + conflicts), `plan_meal` (defaults to who's home), `update_planned_meal`, `remove_planned_meal`, `mark_away` (one-off or `every_weekday`), `remove_away`, `plan_without_absent` |
 | Shopping | `get_shopping_list` (with reasons), `add_to_shopping_list`, `update_shopping_item` (tick off, change, snooze, dismiss) |
 | Eating | `list_people`, `log_eaten`, `record_cooked_meal` (actual portions per person, leftovers, waste, pantry deductions), `get_intake` |

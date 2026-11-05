@@ -145,3 +145,18 @@ async def test_medicines_and_vitamins(client):
     assert sum(1 for d in rows if d["item"] == name) == 2
     due = await call(client, "get_doses_due")
     assert "due" in due and "advice" in due
+
+
+@pytest.mark.anyio
+async def test_stocktake_and_merge(client):
+    tag = uuid.uuid4().hex[:5]
+    a, b = f"Stock test {tag}", f"Stock tests {tag}"
+    await call(client, "add_to_pantry", item=a, quantity=500, unit="g", location="freezer", bought=False, confirm_duplicate=True)
+    await call(client, "add_to_pantry", item=b, quantity=200, unit="g", location="freezer", bought=False, confirm_duplicate=True)
+    r = await call(client, "record_stocktake", location="freezer", counts={a: 350}, not_found=[b])
+    assert len(r["changed"]) == 1 and len(r["not_found"]) == 1
+    dups = await call(client, "find_duplicate_foods")
+    rows = dups["result"] if isinstance(dups, dict) else dups
+    assert any({d["keep"]["name"], d["merge"]["name"]} == {a, b} for d in rows)
+    m = await call(client, "merge_foods", merge=b, into=a)
+    assert m["kept"] == a and b in m["aliases"]

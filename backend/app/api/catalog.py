@@ -108,6 +108,36 @@ def create_food(body: FoodIn, p: Principal = Depends(require("pantry:write")), d
     return food_out(f, db, True)
 
 
+@router.get("/foods/duplicates")
+def food_duplicates(p: Principal = Depends(require("pantry:read")), db: Session = Depends(get_db)):
+    """Likely duplicate foods (same name ignoring plurals/adjectives, or very similar names)."""
+    from sqlalchemy import text
+
+    from ..services.recipes import _singular
+    rows = db.execute(text(
+        "SELECT a.id, a.name, b.id, b.name, similarity(a.name, b.name) AS s FROM food a JOIN food b "
+        "ON a.household_id = b.household_id AND a.id < b.id AND a.is_pet_food = b.is_pet_food "
+        "WHERE a.household_id = :h AND (similarity(a.name, b.name) > 0.5 OR lower(a.name) LIKE '%' || lower(b.name) || '%' "
+        "OR lower(b.name) LIKE '%' || lower(a.name) || '%') ORDER BY s DESC LIMIT 50"), {"h": p.household_id}).all()
+    usage = {}
+
+    def used(fid):
+        if fid not in usage:
+            usage[fid] = db.scalar(text("SELECT (SELECT count(*) FROM pantry_lot WHERE food_id = :f) + (SELECT count(*) FROM product WHERE food_id = :f)"
+                                        " + (SELECT count(*) FROM recipe_ingredient WHERE food_id = :f)"), {"f": fid})
+        return usage[fid]
+
+    out = []
+    for a_id, a_name, b_id, b_name, sim in rows:
+        if a_name.lower().startswith("leftovers:") or b_name.lower().startswith("leftovers:"):
+            continue
+        same = _singular(a_name) == _singular(b_name)
+        keep, drop = ((a_id, a_name), (b_id, b_name)) if used(a_id) >= used(b_id) else ((b_id, b_name), (a_id, a_name))
+        out.append({"keep": {"id": str(keep[0]), "name": keep[1], "uses": used(keep[0])}, "merge": {"id": str(drop[0]), "name": drop[1], "uses": used(drop[0])},
+                    "similarity": round(float(sim), 2), "same_name": same})
+    return out
+
+
 @router.get("/foods/{food_id}")
 def get_food(food_id: uuid.UUID, p: Principal = Depends(require("recipes:read")), db: Session = Depends(get_db)):
     return food_out(get_owned(db, Food, food_id, p.household_id, "Food"), db, True)
@@ -398,3 +428,46 @@ def barcode_lookup(code: str, pet: bool = False, p: Principal = Depends(require(
         return {"status": "draft", "draft": res["draft"], "source": res["source"], "warning": res.get("error")}
     return {"status": "unknown", "barcode": code, "message": res.get("error") or "Not found. Add it with a name and size.",
             "lookup_error": res.get("error")}
+
+
+# ---- duplicates & merge ------------------------------------------------------------------------------------------------
+
+class MergeIn(BaseModel):
+    into_food_id: uuid.UUID
+
+
+@router.post("/foods/{food_id}/merge")
+def merge_food(food_id: uuid.UUID, body: MergeIn, p: Principal = Depends(require("pantry:write")), db: Session = Depends(get_db)):
+    """Merge a duplicate food into another: products, stock, recipe ingredient links, plans, shopping list, prices and
+    history are relinked; the name becomes an alias. Recipe wording and quantities are untouched."""
+    from sqlalchemy import text
+    src = get_owned(db, Food, food_id, p.household_id, "Food")
+    dst = get_owned(db, Food, body.into_food_id, p.household_id, "Food")
+    if src.id == dst.id:
+        raise HTTPException(422, "Choose a different food to merge into")
+    if src.is_pet_food != dst.is_pet_food:
+        raise HTTPException(422, "Pet food and human food can't be merged")
+    if src.default_unit != dst.default_unit:
+        lots = db.scalar(text("SELECT count(*) FROM pantry_lot WHERE food_id = :f AND status = 'active'"), {"f": src.id})
+        if lots:
+            raise HTTPException(409, f"'{src.name}' is stocked in {src.default_unit} but '{dst.name}' in {dst.default_unit}; "
+                                     "correct or use up that stock first")
+    moved = {}
+    for table in ("product", "pantry_lot", "recipe_ingredient", "meal_plan", "shopping_list_item", "price_observation", "purchase",
+                  "receipt_line", "offer", "meal_consumption", "nutrition_record"):
+        res = db.execute(text(f"UPDATE {table} SET food_id = :d WHERE food_id = :s"), {"d": dst.id, "s": src.id})
+        if res.rowcount:
+            moved[table] = res.rowcount
+    dst.aliases = sorted({*(dst.aliases or []), src.name, *(src.aliases or [])} - {dst.name})
+    dst.conversions = {**(src.conversions or {}), **(dst.conversions or {})}
+    for k in ("density_g_per_ml", "category", "cofid_code", "min_stock_base", "notes"):
+        if getattr(dst, k) is None and getattr(src, k) is not None:
+            setattr(dst, k, getattr(src, k))
+    if not dst.each_weight_confirmed and src.each_weight_confirmed:
+        dst.each_weight_g, dst.each_weight_confirmed = src.each_weight_g, True
+    dst.allergens = sorted({*(dst.allergens or []), *(src.allergens or [])})
+    audit(db, p, "food.merged", "food", dst.id, {"merged": src.name, "moved": moved})
+    db.flush()
+    db.delete(src)
+    db.commit()
+    return {"kept": food_out(dst), "merged": src.name, "moved": moved}

@@ -14,7 +14,7 @@ export default function Settings() {
     <>
       <div className="page-head"><div><div className="eyebrow">{me?.household.name}</div><h1>Settings</h1></div><button className="btn" onClick={signOut}>Sign out</button></div>
       <div className="two-col" style={{ alignItems: "start" }}>
-        <div className="stack"><People /><Pets /></div>
+        <div className="stack"><People /><Pets /><TidyFoods /></div>
         <div className="stack">
           <Users isAdmin={isAdmin} />
           {isAdmin && <Tokens />}
@@ -74,6 +74,35 @@ function PersonSheet({ person, onClose, onSaved }: { person: any; onClose: () =>
         <button className="btn primary">Save</button>
       </form>
     </Sheet>
+  );
+}
+
+function TidyFoods() {
+  const { data, reload } = useApi<any[]>("/foods/duplicates");
+  const toast = useToast();
+  async function merge(d: any, flip = false) {
+    const [src, dst] = flip ? [d.keep, d.merge] : [d.merge, d.keep];
+    try {
+      const r = await api(`/foods/${src.id}/merge`, { body: { into_food_id: dst.id } });
+      toast(`Merged “${r.merged}” into “${r.kept.name}”`); reload();
+    } catch (e) { toast(errorText(e)); }
+  }
+  return (
+    <section className="panel">
+      <h2>Tidy up foods</h2>
+      <p className="xsmall muted">Possible duplicates. Merging moves stock, products, recipe links, plans, the shopping list and prices onto one food and keeps the other name as an alias. Recipe wording isn't changed.</p>
+      {(data || []).length === 0 ? <p className="small muted">No likely duplicates.</p> : (
+        <ul className="list" style={{ marginTop: 8 }}>
+          {(data || []).slice(0, 12).map((d, i) => (
+            <li key={i} className="list-row" style={{ minHeight: 52 }}>
+              <span className="grow small"><strong>{d.merge.name}</strong> <span className="muted">({d.merge.uses} uses)</span> → <strong>{d.keep.name}</strong> <span className="muted">({d.keep.uses})</span></span>
+              <button className="btn small" onClick={() => merge(d)}>Merge</button>
+              <button className="btn ghost small" onClick={() => merge(d, true)} title={`Keep “${d.merge.name}” instead`}>Other way</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

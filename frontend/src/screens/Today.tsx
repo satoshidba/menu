@@ -74,6 +74,12 @@ export default function Today() {
                 ))}
               </ul>
             )}
+            {data.stocktake_due?.length > 0 && (
+              <p className="small muted" style={{ marginTop: 16 }}>
+                <Icon name="check" size={14} /> {data.stocktake_due.map((x: any) => `${x.location[0].toUpperCase()}${x.location.slice(1)} ${x.days_since === null ? "never counted" : `last counted ${x.days_since} days ago`}`).join(" · ")}.{" "}
+                <Link to={`/pantry/stocktake?location=${data.stocktake_due[0].location}`}>Do a quick count</Link>
+              </p>
+            )}
             <div className="section-title"><h2>Running low</h2><Link to="/shopping" className="small">Shopping list</Link></div>
             {data.low_stock.length === 0 ? <p className="muted small">Nothing is below its minimum. Set minimums on pantry items to be reminded.</p> : (
               <ul className="list">

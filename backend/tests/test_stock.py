@@ -120,3 +120,51 @@ def test_use_by_food_takes_earliest_first(client):
     r = client.post("/api/v1/pantry/use", json={"food_id": a["food_id"], "quantity": 1, "unit": "l", "type": "waste", "reason": "sour"})
     assert r.json()["shortfall_base"] == 200 and "below zero" in r.json()["message"]
     assert client.get("/api/v1/pantry/consistency").json()["mismatches"] == []
+
+
+def test_stocktake_by_location(client):
+    a = client.post("/api/v1/pantry/lots", json={"food_name": "Yogurt", "quantity": 500, "unit": "g", "location": "fridge"}).json()["lot"]
+    b = client.post("/api/v1/pantry/lots", json={"food_name": "Cheddar", "quantity": 250, "unit": "g", "location": "fridge"}).json()["lot"]
+    c = client.post("/api/v1/pantry/lots", json={"food_name": "Butter", "quantity": 250, "unit": "g", "location": "fridge"}).json()["lot"]
+    client.post("/api/v1/pantry/lots", json={"food_name": "Rice", "quantity": 1, "unit": "kg", "location": "cupboard"})
+    assert {x["location"] for x in client.get("/api/v1/today").json()["stocktake_due"]} == {"fridge", "cupboard"}
+    sheet = client.get("/api/v1/pantry/stocktake?location=fridge").json()
+    assert {x["name"] for x in sheet["lots"]} == {"Yogurt", "Cheddar", "Butter"}
+    body = {"location": "fridge", "counts": [{"lot_id": a["id"], "counted_quantity": 300}, {"lot_id": b["id"], "counted_quantity": 250}],
+            "not_found": [c["id"]], "idempotency_key": "st-1"}
+    r = client.post("/api/v1/pantry/stocktake", json=body).json()
+    assert len(r["changed"]) == 1 and r["unchanged"] == 1 and r["not_found"] == [c["id"]]
+    # replay is harmless
+    client.post("/api/v1/pantry/stocktake", json=body)
+    pantry = {g["name"]: g for g in client.get("/api/v1/pantry?location=fridge").json()["items"]}
+    assert pantry["Yogurt"]["quantity_base"] == 300 and "Butter" not in pantry
+    events = client.get(f"/api/v1/pantry/lots/{a['id']}").json()["events"]
+    assert [e["type"] for e in events] == ["purchase", "correction"] and events[-1]["reason"].startswith("Stocktake (fridge")
+    assert [x["location"] for x in client.get("/api/v1/today").json()["stocktake_due"]] == ["cupboard"]
+    assert client.get("/api/v1/pantry/stocktake?location=fridge").json()["last_counted"]["fridge"]
+    assert client.get("/api/v1/pantry/consistency").json()["mismatches"] == []
+
+
+def test_merge_duplicate_foods(client):
+    keep = client.post("/api/v1/pantry/lots", json={"food_name": "Spinach", "quantity": 200, "unit": "g"}).json()["lot"]
+    dup = client.post("/api/v1/pantry/lots", json={"food_name": "Baby spinach", "quantity": 100, "unit": "g"}).json()["lot"]
+    recipe = client.post("/api/v1/recipes", json={"content": {"title": "Salad", "ingredients": [{"name": "Baby spinach", "quantity": 150, "unit": "g"}],
+                                                              "steps": [{"text": "Toss."}]}}).json()
+    dups = client.get("/api/v1/foods/duplicates").json()
+    pair = next(d for d in dups if {d["keep"]["name"], d["merge"]["name"]} == {"Spinach", "Baby spinach"})
+    src, dst = (pair["merge"]["id"], pair["keep"]["id"])
+    if pair["keep"]["name"] != "Spinach":
+        src, dst = dst, src
+    r = client.post(f"/api/v1/foods/{src}/merge", json={"into_food_id": dst})
+    assert r.status_code == 200, r.text
+    assert "Baby spinach" in r.json()["kept"]["aliases"] and r.json()["moved"]["pantry_lot"] == 1
+    # one pantry line now, recipe (published, immutable) still reads "Baby spinach" but is linked to Spinach and in stock
+    pantry = client.get("/api/v1/pantry").json()["items"]
+    assert [g["name"] for g in pantry] == ["Spinach"] and pantry[0]["quantity_base"] == 300
+    v = client.get(f"/api/v1/recipes/{recipe['id']}").json()["version"]
+    assert v["ingredients"][0]["name"] == "Baby spinach" and v["ingredients"][0]["food_id"] == dst
+    review = client.get(f"/api/v1/recipes/{recipe['id']}/versions/{v['id']}/review").json()
+    assert review["requirements"][0]["status"] == "ok"
+    # future recipes with the alias link straight to the kept food
+    assert client.get(f"/api/v1/foods/{src}").status_code == 404
+    _ = keep, dup

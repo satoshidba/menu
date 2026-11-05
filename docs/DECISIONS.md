@@ -182,3 +182,13 @@ uses a separate token with only the `calendar:read` scope, which can be revoked 
 
 Tokens are redacted from all log lines. The feed never includes medicines or intake. It was validated with a
 third-party iCalendar parser, including expanding the weekly rule.
+
+### ADR-023 — Stocktake as corrections, and merging foods
+A stocktake counts one location. Each counted line that differs becomes a normal `correction` event, and lines marked
+"not here" are corrected to zero, so the append-only ledger stays the single source of truth and a count can be
+audited afterwards. The whole count shares one idempotency key and an audit entry (`pantry.stocktake`), which also
+records when each location was last counted; Today nudges after 30 days.
+
+Exact-name matching creates near-duplicate foods. `GET /foods/duplicates` suggests pairs by trigram similarity or one
+name containing the other (singular/plural aware), with how much each is used so the busier one is kept. `POST /foods/{id}/merge` repoints every table that references the food in one transaction, merges aliases and unit conversions, keeps the
+old name as an alias and deletes the source. It needs an explicit target, and nothing merges automatically.

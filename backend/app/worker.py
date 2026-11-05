@@ -75,8 +75,10 @@ def main() -> None:
     signal.signal(signal.SIGINT, stop)
     last_backup, last_house = None, 0.0
     log.info("worker started")
+    heartbeat = s.data_dir / ".worker-heartbeat"
     while not _stop:
         try:
+            heartbeat.touch()
             if time.time() - last_house > 600:
                 housekeeping()
                 last_house = time.time()

@@ -52,7 +52,8 @@ services:
     mem_limit: 1g
     pids_limit: 256
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f app.worker >/dev/null || exit 1"]
+      # The worker touches a heartbeat file every loop; unhealthy if it hasn't for two minutes.
+      test: ["CMD", "python", "-c", "import os,sys,time; sys.exit(0 if time.time() - os.path.getmtime('/data/.worker-heartbeat') < 120 else 1)"]
       interval: 30s
       timeout: 5s
       retries: 3

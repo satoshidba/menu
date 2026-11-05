@@ -32,7 +32,7 @@ RETURN_WORDS = re.compile(r"\b(refund|return(ed)?)\b", re.I)
 BAG_WORDS = re.compile(r"\b(carrier bag|bag for life|bag charge)\b", re.I)
 DEPOSIT_WORDS = re.compile(r"\b(deposit)\b", re.I)
 
-PRICE = r"-?£?\s?\d{1,4}[.,]\d{2}-?"
+PRICE = r"-?\s?£?\s?\d{1,4}[.,]\d{2}-?"  # OCR often reads "- £0.40" with a space
 PRICE_END = re.compile(rf"(?P<price>{PRICE})\s*(?:[A-Z*]{{1,2}})?\s*$")
 QTY_AT = re.compile(r"^\s*(?P<q>\d+)\s*(?:x|@)\s*£?\s?(?P<each>\d+[.,]\d{2})\b", re.I)
 WEIGHT_AT = re.compile(r"(?P<kg>\d+[.,]\d{1,3})\s*kg\s*@\s*£?\s?(?P<per>\d+[.,]\d{2})\s*/\s*kg", re.I)

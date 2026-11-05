@@ -46,7 +46,7 @@ def image_text(path: Path) -> str:
             g = ImageOps.grayscale(ImageOps.exif_transpose(im))
             if g.width < 1400:
                 g = g.resize((g.width * 2, g.height * 2))
-            return pytesseract.image_to_string(g, lang="eng", config="--psm 4", timeout=90)
+            return pytesseract.image_to_string(g, lang="eng", config="--psm 6 -c preserve_interword_spaces=1", timeout=90)
     except Exception as e:  # noqa: BLE001 - OCR missing or failed
         log.warning("OCR unavailable: %s", type(e).__name__)
         return ""

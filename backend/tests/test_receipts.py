@@ -37,6 +37,12 @@ def test_parser_reads_promotions_weights_and_totals():
     assert r.warnings == [] and r.confidence >= 0.9
 
 
+def test_parser_tolerates_ocr_spacing():
+    r = parse_receipt_text(RECEIPT.replace("-£0.40", "- £0.40").replace("£1.90", "£1,90"))
+    disc = next(ln for ln in r.lines if ln.kind == "discount")
+    assert disc.line_total_pence == -40 and r.total_pence == 422 and r.confidence >= 0.9
+
+
 def _upload(client, text=RECEIPT, **extra):
     r = client.post("/api/v1/receipts/import", files={"file": ("receipt.txt", io.BytesIO(text.encode()), "text/plain")}, data=extra)
     assert r.status_code == 202, r.text

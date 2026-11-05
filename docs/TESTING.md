@@ -39,7 +39,7 @@ docker compose run --rm -T -e LARDER_TEST_DATABASE_URL=postgresql+psycopg://lard
 
 ## MCP server
 
-`mcp-server/tests/test_tools.py` runs 7 end-to-end tests with a real MCP client against a running, seeded Larder.
+`mcp-server/tests/test_tools.py` runs 9 end-to-end tests with a real MCP client against a running, seeded Larder.
 They check:
 - tool, prompt and resource listing, annotations and server instructions;
 - read tools;
@@ -47,7 +47,11 @@ They check:
 - add to pantry and use from it, including the never-below-zero shortfall;
 - receipt import, where apply is refused without `confirm`, then applied, then re-applied as a no-op;
 - medicines: a second dose too soon is not recorded and returns the warning, then is recorded only with explicit acknowledgement;
+- stocktake and merging duplicate foods;
+- insights and forecasts (every forecast is a range with its basis and confidence);
 - readable errors.
+
+The latest run (5 Nov 2026, after Insights was added) was 9/9 against the dev API.
 
 **Results (5 Nov 2026).**
 - 6/6 against the dev API.
@@ -69,6 +73,26 @@ They check:
 | 7 | **Pass, with a caveat on real devices** | <a id="acceptance-test-7"></a>From a fresh clone with `cp .env.example .env` and `docker compose up`, all four services were healthy and served over HTTPS: the Caddy internal CA certificate verified with curl, CSP/HSTS headers were present, and the manifest, service worker and deep links loaded. **Restore drill:** seed data; take an encrypted backup; copy it off the stack; `docker compose down -v` to destroy every volume; bring up an empty instance (`needs_setup: true`); restore from stdin; sign in. All 4 recipes came back, the hero image was byte-identical (641,713 bytes), all 15 pantry items came back, and `cli check` reported 0 mismatched lots. **Not done:** this environment has no physical iPhone, iPad or Android device. Phone and tablet browsers were emulated in Chromium at 390 and 820 px; Safari behaviour (ZXing camera fallback, install to Home Screen, root-CA trust) is untested. |
 | 8 | **Pass, with a caveat** | 24 screenshots (8 screens at 3 widths) are in `docs/screenshots/`, and the tokens and contrast ratios are in `DESIGN.md`. Screens were inspected and the layout issues fixed. Reduced motion is honoured via a CSS media query, and Playwright captured the screenshots with `reducedMotion: "reduce"`. Contrast was computed for every text token. **Not done:** testing with a real screen reader (VoiceOver or TalkBack). The markup uses labelled controls, landmarks, `aria-live` for timers and toasts, and focus management in sheets, but it hasn't been audited with assistive technology. |
 
+## Browser tests
+
+`e2e/ui.test.mjs` drives Chromium through Playwright, using Node's built-in test runner, against a seeded instance:
+
+```bash
+E2E_BASE=http://127.0.0.1:4173 E2E_PASSWORD=<demo password> node --test e2e/ui.test.mjs
+```
+
+It covers:
+- sign-in, including a wrong password;
+- every main page at 390 px and 820 px with no sideways scrolling and no console or page errors;
+- phone access to the secondary pages;
+- cooking mode;
+- adding, ticking and clearing a shopping item;
+- a fridge stocktake correction;
+- Insights (forecasts, the chart's table view, add to list);
+- away tags on the plan.
+
+CI runs it in the `e2e` job. Latest local run: 9/9.
+
 ## Things found by testing and fixed during the build
 
 - Alembic's `create_table` silently drops `use_alter` foreign keys. The initial migration now adds them explicitly.
@@ -80,3 +104,9 @@ They check:
   fixes it, and the parser accepts "- £0.40".
 - The worker healthcheck relied on `pgrep`, which isn't in the slim image. It now uses a heartbeat file.
 - Child profiles defaulted to a full portion; they now default to half a serving.
+- On phones, Nutrition (and later Insights) could only be reached from the desktop sidebar. Settings now lists the
+  secondary pages on phones.
+- The browser tests found that the Nutrition daily-totals table made the whole page scroll sideways at 390 px. It
+  now scrolls inside its own box.
+- A forecast review found that a food used regularly but not for weeks would have shown as "out now" and gone onto
+  the list. Usage forecasts now need use within the last three weeks.

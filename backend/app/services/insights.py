@@ -257,6 +257,9 @@ def forecasts(db: Session, household_id: uuid.UUID) -> dict:
         if observed < USAGE_MIN_DAYS or len(evs) < USAGE_MIN_EVENTS:
             learning.append(foods[fid].name)
             continue
+        last_used = max(d for d, _ in evs)
+        if (today - last_used).days > 21:  # not used for three weeks: probably stopped buying it
+            continue
         total = sum(q for _, q in evs)
         nweeks = max(2, observed // 7)
         weekly = [0.0] * nweeks

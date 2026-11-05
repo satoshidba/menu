@@ -92,3 +92,56 @@ jobs:
           python -m pytest -q mcp-server/tests
       - if: failure()
         run: cat /tmp/api.log
+
+  e2e:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.4-alpine
+        env:
+          POSTGRES_USER: larder
+          POSTGRES_PASSWORD: larder
+          POSTGRES_DB: larder
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U larder" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      LARDER_DATABASE_URL: postgresql+psycopg://larder:larder@localhost:5432/larder
+      LARDER_DATA_DIR: /tmp/larder-data
+      LARDER_COOKIE_SECURE: "false"
+      LARDER_INLINE_JOBS: "true"
+      LARDER_OFF_ENABLED: "false"
+      LARDER_DEMO_PASSWORD: ci-demo-password
+      E2E_PASSWORD: ci-demo-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements.txt
+      - name: Start a seeded Larder API
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python -m app.cli seed-demo
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/api/v1/health && break; sleep 1; done
+      - name: Build and serve the web app
+        working-directory: frontend
+        run: |
+          npm ci && npm run build
+          nohup npx vite preview --port 4173 --strictPort > /tmp/web.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4173/ > /dev/null && break; sleep 1; done
+      - name: Browser tests
+        working-directory: e2e
+        run: |
+          npm install --no-package-lock
+          npx playwright install --with-deps chromium
+          npm test
+      - if: failure()
+        run: cat /tmp/api.log /tmp/web.log

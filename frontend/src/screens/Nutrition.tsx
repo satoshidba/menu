@@ -78,14 +78,14 @@ export default function Nutrition() {
         <div className="today-grid">
           <div className="stack">
             {d.days.length === 0 ? <Empty icon="chart" title="Nothing logged this week">Finish a cook from a recipe, or log a snack, to see it here.</Empty> : <DayChart days={d.days} from={from} to={to} />}
-            <table className="ledger">
+            <div className="ledger-wrap" tabIndex={0} aria-label="Daily totals (scrolls sideways)"><table className="ledger small">
               <thead><tr><th>Day</th>{ROWS.slice(0, 4).map(([k, l]) => <th key={k} className="money">{l}</th>)}<th className="money">Salt</th></tr></thead>
               <tbody>{d.days.map((day: any) => (
                 <tr key={day.date}><td>{fmtDay(day.date)}</td>
                   {[...ROWS.slice(0, 4), ["salt_g", "Salt"]].map(([k]) => { const n = day.nutrients[k]; return <td key={k} className="money">{n.status === "partial" ? "≥" : ""}{fmtVal(n.value, k)} <span className="xsmall muted">{n.value !== null ? n.unit : ""}</span></td>; })}
                 </tr>))}
               </tbody>
-            </table>
+            </table></div>
             <p className="xsmall muted">{d.note}</p>
           </div>
           <div className="stack">

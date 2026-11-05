@@ -148,3 +148,12 @@ def test_insights_need_pantry_scope(client, anon):
     tok = client.post("/api/v1/tokens", json={"name": "y", "scopes": ["pantry:read"]}).json()["token"]
     r = anon.get("/api/v1/insights/forecasts", headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 200 and r.json()["forecasts"] == []
+
+
+def test_usage_that_stopped_is_not_forecast(client, db):
+    hid, milk, *_ = _setup(client, db)
+    lot = _buy(db, hid, milk, 4000, "ml", 50, 200)
+    for d in range(49, 29, -3):  # used regularly, then nothing for a month
+        record_event(db, lot.id, hid, EventInput(type="consumption", quantity=500, unit="ml", occurred_at=_at(d)))
+    db.commit()
+    assert forecasts(db, hid)["forecasts"] == []

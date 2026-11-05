@@ -20,7 +20,7 @@ def anyio_backend():
     return "asyncio"
 
 
-async def call(client, name, **args):
+async def call(client, name, /, **args):
     r = await client.call_tool(name, args)
     text = "".join(getattr(c, "text", "") for c in r.content)
     if r.is_error:
@@ -123,3 +123,22 @@ async def test_receipt_needs_confirmation(client):
 async def test_errors_are_readable(client):
     r = await client.call_tool("get_recipe", {"recipe": "definitely not a recipe zzz"})
     assert r.is_error and "No recipe matches" in r.content[0].text
+
+
+@pytest.mark.anyio
+async def test_medicines_and_vitamins(client):
+    name = f"Test paracetamol {uuid.uuid4().hex[:5]}"
+    item = await call(client, "add_cabinet_item", kind="medicine", name=name, pack_quantity=100, pack_unit="ml", dose_amount=5, dose_unit="ml",
+                      label_min_interval_hours=4, label_max_doses_24h=4, packs_in_stock=1)
+    assert item["dose"] == "5 ml"
+    first = await call(client, "log_dose", person="Sam", item=name)
+    assert first["recorded"] is True
+    again = await call(client, "log_dose", person="Sam", item=name)
+    assert again["recorded"] is False and again["needs_confirmation"] and "4 hours" in again["warnings"]
+    forced = await call(client, "log_dose", person="Sam", item=name, acknowledge_warnings=True, notes="test")
+    assert forced["recorded"] is True
+    doses = await call(client, "list_doses", person="Sam")
+    rows = doses["result"] if isinstance(doses, dict) else doses
+    assert sum(1 for d in rows if d["item"] == name) == 2
+    due = await call(client, "get_doses_due")
+    assert "due" in due and "advice" in due

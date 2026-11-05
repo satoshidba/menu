@@ -49,6 +49,8 @@ The tables required by the brief, plus a few supporting ones:
   pack size, normalised unit price, shop, time, source and confidence.
 - **MealPlan, CookedBatch, MealConsumption, ShoppingListItem**: consumption rows freeze a nutrition snapshot with
   provenance and have a stable `external_id`.
+- **Regimen, DoseLog**: routines and recorded doses for supplements and medicines (products with `kind` supplement or
+  medicine and label directions). Supplement doses link to a `MealConsumption` so they appear in intake.
 - **ImportJob, AuditEvent, IdempotencyRecord, RateLimitHit**: the Postgres job queue, the audit trail (including AI
   usage and cost, never prompts), HTTP idempotency, and rate limits.
 
@@ -62,6 +64,8 @@ The tables required by the brief, plus a few supporting ones:
 | No negative stock without an explicit override and explanation | `services/stock.record_event`, plus a CHECK constraint that an override has a reason |
 | A receipt is applied at most once | Row lock and status, `apply_idempotency_key`, `idempotency_key` on each line's stock event, and a unique `purchase.receipt_line_id` |
 | Duplicate receipts are detected | File SHA-256, a fingerprint (retailer, date, total, receipt number), and same-day/same-total matching. Apply refuses unless confirmed |
+| Medicines never count as nutrition; health items stay out of the food pantry and recipes | `kind` checks in nutrition, recipes and consumption; the pantry and Today exclude supplement/medicine lots |
+| A dose that conflicts with the entered directions needs explicit acknowledgement | `services/health.log_dose` returns 409 with the reasons, and the acknowledgement is stored on the dose |
 | Pet food never enters human nutrition | Nutrition records refused for pet products; recipes and consumption refuse pet items; pet lots excluded from planning |
 | Unknown is never zero | Nutrients are `null` when unknown. Totals carry a `complete`/`partial`/`unknown` status and the contributors that were missing |
 | Counts never silently become grams | `services/units.convert` needs a confirmed per-item weight or an explicit per-unit factor |

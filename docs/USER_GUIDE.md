@@ -77,6 +77,23 @@ the UK CoFID tables, and are **estimates** unless every source was a verified la
 data, so the real total is higher; unknown values are never counted as zero. **Log food** adds a snack.
 **CSV/JSON** downloads the week. For the children, these numbers are a record, not targets.
 
+## Medicines & vitamins
+Under the pill icon (phone) or **Medicines & vitamins** (sidebar) you'll find the **cabinet**: vitamins (like the
+children's vitamin drops), supplements such as protein powder, and medicines. Each shows its stock, expiry date and
+the directions you recorded.
+
+- **Add item**: copy the details from the packet. For a medicine, enter the dose, the minimum hours between doses and
+  the maximum doses in 24 hours exactly as printed or prescribed. For a vitamin or supplement, enter what one dose
+  contains (e.g. 10 µg vitamin D, or 24 g protein per scoop). Larder never works out doses for you.
+- **Who takes it**: open an item and add a routine, e.g. "Mia, once a day, health visitor", or "when needed" for
+  things like pain relief. Daily routines appear under **Due today** here and on the Today screen; tap **Given**.
+- **Log a dose** records any dose with its time. If it's sooner than the interval you entered, more than the 24-hour
+  maximum, or the stock has expired, Larder stops and shows why. You can still record it with **Record anyway**, and
+  that choice is kept on the record. If in doubt, ask a pharmacist, your GP or NHS 111.
+- Doses come out of the cabinet stock, and items with a "remind me below" amount join the shopping list when low.
+- Vitamins and supplements count towards that person's nutrition (marked "supplement"); medicines never do. Larder
+  only counts the nutrients on the label, and anything else stays unknown.
+
 ## Settings
 People (allergies, preferences, usual portion), pets (record your vet's feeding plan if you like; Larder gives no
 feeding advice), adults who can sign in, **Connected apps** (read-only tokens for an activity app), your password,

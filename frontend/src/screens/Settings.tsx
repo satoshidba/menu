@@ -145,7 +145,7 @@ function Tokens() {
       <div className="spread"><h2>Connected apps</h2>
         <div className="row-wrap">
           <button className="btn small" onClick={() => setForm({ name: "AI agent (MCP)", agent: true, person_ids: (people.data || []).filter((p) => p.kind === "adult").map((p) => p.id),
-            scopes: ["recipes:read", "recipes:write", "pantry:read", "pantry:write", "plan:read", "plan:write", "receipts:write", "intake:read", "intake:write"] })}><Icon name="idea" size={16} />AI agent</button>
+            scopes: ["recipes:read", "recipes:write", "pantry:read", "pantry:write", "plan:read", "plan:write", "receipts:write", "intake:read", "intake:write", "health:read", "health:write"] })}><Icon name="idea" size={16} />AI agent</button>
           <button className="btn small" onClick={() => setForm({ name: "Activity app", scopes: ["intake:read"], person_ids: [] })}><Icon name="plus" size={16} />New token</button>
         </div>
       </div>

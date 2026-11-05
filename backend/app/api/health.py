@@ -42,7 +42,7 @@ def item_out(db: Session, row: dict) -> dict:
     return {
         "product_id": sid(p.id), "kind": p.kind, "name": p.name, "brand": p.brand,
         "pack": f"{p.package_quantity:g} {p.package_unit}" if p.package_quantity else None,
-        "dose": f"{p.dose_amount:g} {p.dose_unit}" if p.dose_unit else None, "dose_amount": p.dose_amount, "dose_unit": p.dose_unit,
+        "dose": health.qty_unit(p.dose_amount or 1, p.dose_unit) if p.dose_unit else None, "dose_amount": p.dose_amount, "dose_unit": p.dose_unit,
         "label_min_interval_hours": p.label_min_interval_hours, "label_max_doses_24h": p.label_max_doses_24h,
         "active_ingredients": p.active_ingredients, "label_directions": p.label_directions, "allergens": p.allergens or [],
         "stock": amount(row["total"], p) if row["lots"] else None, "stock_base": row["total"], "base_unit": p.base_unit,

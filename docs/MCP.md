@@ -17,6 +17,7 @@ In Larder, go to **Settings → Connected apps → AI agent**. This fills in the
 
 - `recipes:read|write`, `pantry:read|write`, `plan:read|write`, `receipts:write`
 - `intake:read|write` for the adults
+- `health:read|write` for medicines and vitamins
 
 Add `intake:read:children` only if you want the agent to see the toddlers' intake. Copy the token (`lrd_…`); it's
 shown once. You can rotate or revoke it on the same screen.
@@ -109,6 +110,7 @@ Items, recipes and people can be named ("spinach", "Banana porridge", "Sam"); id
 | Shopping | `get_shopping_list` (with reasons), `add_to_shopping_list`, `update_shopping_item` (tick off, change, snooze, dismiss) |
 | Eating | `list_people`, `log_eaten`, `record_cooked_meal` (actual portions per person, leftovers, waste, pantry deductions), `get_intake` |
 | Receipts | `import_receipt_text`, `list_receipts`, `get_receipt`, `match_receipt_line`, `apply_receipt` |
+| Medicines and vitamins | `get_medicine_cabinet`, `get_doses_due`, `log_dose` (checks against the entered directions; conflicts return warnings and need the user's explicit confirmation), `list_doses`, `add_cabinet_item`, `add_routine` (needs `health:read`/`health:write`) |
 
 **Resources:**
 - `larder://today`
@@ -126,6 +128,8 @@ Things you might ask:
   first, keep it mild for the kids, and show me the shopping list."
 - "We used the last of the spinach and about 300 g of pasta tonight."
 - "Here's my Sainsbury's e-receipt: match what you can, show me the rest, and add it once I say so."
+- "Mia's had her vitamin drops and Sam took 5 ml of the paracetamol at 7pm." (The agent records exactly that, and
+  relays any warning, such as "too soon", before asking you.)
 - "Make the dal recipe toddler-friendly, show me the differences, and save it as a separate version if I like it."
 
 ## Limits and safety

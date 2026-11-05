@@ -91,6 +91,7 @@ const SCREENS = [
   ["receipt", receipts[0] ? `/receipts/${receipts[0].id}` : "/receipts"],
   ["nutrition", "/nutrition"],
   ["plan", "/plan"],
+  ["health", "/health"],
 ];
 
 const b2 = await chromium.launch(launchOpts);

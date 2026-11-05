@@ -107,6 +107,8 @@ def test_regimens_due_today_and_low_stock(client):
     due = client.get("/api/v1/health/today").json()["due"]
     vd_due = next(d for d in due if d["item"].endswith("Vitamin D drops"))
     assert vd_due["remaining_today"] == 1 and vd_due["dose"] == "1 drop"
+    from app.services.health import qty_unit
+    assert qty_unit(5, "drop") == "5 drops" and qty_unit(2, "sachet") == "2 sachets" and qty_unit(5, "ml") == "5 ml"
     assert next(d for d in due if "paracetamol" in d["item"])["remaining_today"] == 0  # as needed: never "due"
     assert client.get("/api/v1/today").json()["health"]["due"][0]["regimen_id"] == reg["regimen_id"]
     r = client.post("/api/v1/health/doses", json={"person_id": mia, "regimen_id": reg["regimen_id"]})

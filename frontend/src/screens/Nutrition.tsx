@@ -99,8 +99,8 @@ export default function Nutrition() {
             <ul className="list">
               {d.entries.slice().reverse().map((e: any) => (
                 <li key={e.id} className="list-row">
-                  <span className="grow"><span className="title">{e.description}</span><span className="meta" style={{ display: "block" }}>{fmtDay(e.consumed_at)} {fmtTime(e.consumed_at)} · {e.amount} {e.amount_unit}{e.amount === 1 || e.amount_unit !== "serving" ? "" : "s"}{e.nutrition.energy_kcal === null && !e.provenance.complete ? " · no nutrition data" : e.provenance.complete && !e.provenance.estimated ? " · from labels" : " · estimate"}</span></span>
-                  <span className="qty">{e.nutrition.energy_kcal === null ? "?" : `${e.provenance.status?.energy_kcal === "partial" ? "≥" : ""}${Math.round(e.nutrition.energy_kcal)}`}<span className="xsmall muted"> kcal</span></span>
+                  <span className="grow"><span className="title">{e.description}</span><span className="meta" style={{ display: "block" }}>{fmtDay(e.consumed_at)} {fmtTime(e.consumed_at)} · {e.amount} {e.amount_unit}{e.amount === 1 || e.amount_unit !== "serving" ? "" : "s"}{e.meal_slot === "supplement" ? " · supplement" : ""}{e.nutrition.energy_kcal === null && !e.provenance.complete ? (e.meal_slot === "supplement" ? "" : " · no nutrition data") : e.provenance.complete && !e.provenance.estimated ? " · from labels" : " · estimate"}</span></span>
+                  <span className="qty">{e.nutrition.energy_kcal === null ? (e.meal_slot === "supplement" ? Object.entries(e.nutrition).filter(([, v]) => v !== null).slice(0, 1).map(([k, v]: any) => `${Math.round(v * 10) / 10} ${e.nutrition_units[k]} ${k.split("_")[0]}`).join("") || "—" : "?") : `${e.provenance.status?.energy_kcal === "partial" ? "≥" : ""}${Math.round(e.nutrition.energy_kcal)}`}<span className="xsmall muted"> kcal</span></span>
                 </li>
               ))}
             </ul>

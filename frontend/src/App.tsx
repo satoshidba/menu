@@ -18,6 +18,7 @@ import ReceiptReview from "./screens/ReceiptReview";
 import Nutrition from "./screens/Nutrition";
 import Settings from "./screens/Settings";
 import DesignSystem from "./screens/DesignSystem";
+import Health from "./screens/Health";
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/receipts" element={<Receipts />} />
       <Route path="/receipts/:id" element={<ReceiptReview />} />
       <Route path="/nutrition" element={<Nutrition />} />
+      <Route path="/health" element={<Health />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -73,6 +75,7 @@ const MORE = [
   { to: "/shopping", label: "Shopping list", icon: "cart" },
   { to: "/receipts", label: "Receipts", icon: "receipt" },
   { to: "/nutrition", label: "Nutrition", icon: "chart" },
+  { to: "/health", label: "Medicines & vitamins", icon: "pill" },
   { to: "/settings", label: "Settings", icon: "settings" },
 ];
 
@@ -116,6 +119,7 @@ function Shell({ children }: { children: ReactNode }) {
         <header className="topbar">
           <Wordmark />
           <div className="row">
+            <NavLink to="/health" className="btn ghost icon-btn" aria-label="Medicines and vitamins"><Icon name="pill" /></NavLink>
             <NavLink to="/shopping" className="btn ghost icon-btn" aria-label="Shopping list"><Icon name="cart" /></NavLink>
             <NavLink to="/receipts" className="btn ghost icon-btn" aria-label="Receipts"><Icon name="receipt" /></NavLink>
             <NavLink to="/settings" className="btn ghost icon-btn" aria-label="Settings and more"><Icon name="settings" /></NavLink>

@@ -32,18 +32,20 @@ docker compose run --rm -T -e LARDER_TEST_DATABASE_URL=postgresql+psycopg://lard
 | Token authorisation | `test_tokens.py`: read-only token exports one adult as JSON and CSV with stable IDs and units, can't read the other adult or a toddler, can't write or read other areas, child scope needed, incremental sync with tombstones, rotation and revocation, CSRF on cookie sessions, member can't mint tokens |
 | Recipes | `test_recipes.py`: schema.org URL import (UK units, unresolved amounts, method order, source, step and hero images), save, AI change proposal with diff, publish as new version with the original retained, immutability trigger, overwrite mode, scaling without changing the base, text import, no-AI fallback, SSRF blocks |
 | Planning and cooking | `test_planning_cooking.py`: shopping list = plan minus usable stock, updated when servings or pantry change, use-by respected, user edits kept; cooking with unequal portions, leftovers, waste, deductions, replay protection, per-person intake, unknown nutrients stay unknown, historical snapshots unchanged after recipe edits |
+| Medicines and vitamins | `test_health.py`: cabinet kept separate from food, recipes and food logging; medicines take no nutrition; dose checks for interval, 24 h maximum and explicit acknowledgement; stock taken from the bottle or tub; supplements counted in intake (protein, vitamin D) with unknowns staying unknown; removing a dose removes its intake entry; routines due today (as-needed never "due"); low stock reaches the shopping list; health scopes, per-person and child rules |
 | Absences | `test_absences.py`: conflicts flagged, "plan without" reduces servings, new meals default to who is home, multi-day and whole-day absences, validation, Today shows who's out |
 | Backup, restore and export | `test_backup_export.py`: backup and restore round trip (plain and encrypted) including media, wrong passphrase fails, export excludes secrets, import into an empty instance keeps versions and media |
 
 ## MCP server
 
-`mcp-server/tests/test_tools.py` runs 6 end-to-end tests with a real MCP client against a running, seeded Larder.
+`mcp-server/tests/test_tools.py` runs 7 end-to-end tests with a real MCP client against a running, seeded Larder.
 They check:
 - tool, prompt and resource listing, annotations and server instructions;
 - read tools;
 - plan → mark someone away → conflict → plan without them → shopping list, with clean-up;
 - add to pantry and use from it, including the never-below-zero shortfall;
 - receipt import, where apply is refused without `confirm`, then applied, then re-applied as a no-op;
+- medicines: a second dose too soon is not recorded and returns the warning, then is recorded only with explicit acknowledgement;
 - readable errors.
 
 **Results (5 Nov 2026).**

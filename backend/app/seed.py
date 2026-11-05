@@ -244,6 +244,38 @@ def seed_demo() -> dict:
                 Absence(household_id=hid, person_id=byname["Sam"].id, start_date=t + timedelta(days=5), end_date=t + timedelta(days=6),
                         slots=[], reason="work", note="Conference in Leeds"),
             ])
+        if not db.scalar(select(Product).where(Product.household_id == hid, Product.kind.in_(("supplement", "medicine")))):
+            from .models import NutritionRecord, Regimen
+            drops = Product(household_id=hid, kind="supplement", name="Children's vitamin drops (A, C, D)",
+                            package_quantity=10, package_unit="ml", package_base_quantity=10, base_unit="ml", dose_amount=5, dose_unit="drop",
+                            category="Medicines & vitamins", label_directions="Sample item: copy the directions from your own bottle.",
+                            min_stock_base=3)
+            whey = Product(household_id=hid, kind="supplement", name="Whey protein powder", brand="Store brand", package_quantity=1,
+                           package_unit="kg", package_base_quantity=1000, base_unit="g", dose_amount=30, dose_unit="g",
+                           category="Medicines & vitamins", min_stock_base=200)
+            para = Product(household_id=hid, kind="medicine", name="Infant paracetamol suspension", package_quantity=100,
+                           package_unit="ml", package_base_quantity=100, base_unit="ml", dose_amount=5, dose_unit="ml",
+                           label_min_interval_hours=4, label_max_doses_24h=4, active_ingredients="Paracetamol 120 mg/5 ml",
+                           label_directions="Sample item: enter the age-band directions from your own bottle.", category="Medicines & vitamins")
+            db.add_all([drops, whey, para])
+            db.flush()
+            db.add_all([
+                NutritionRecord(household_id=hid, product_id=drops.id, source="label", basis="dose", verified=True, confidence=0.9,
+                                nutrients={"vitamin_a_ug": 233, "vitamin_c_mg": 20, "vitamin_d_ug": 10}, notes="Sample values"),
+                NutritionRecord(household_id=hid, product_id=whey.id, source="label", basis="dose", verified=True, confidence=0.9,
+                                nutrients={"protein_g": 24, "energy_kcal": 118, "carbohydrate_g": 2.1, "sugars_g": 1.6, "fat_g": 1.8, "salt_g": 0.15},
+                                notes="Sample values"),
+            ])
+            create_lot(db, hid, product=drops, food=None, quantity=1, unit="pack", location="other", event_type="add",
+                       use_by=t + timedelta(days=21), date_label="Expiry")
+            create_lot(db, hid, product=whey, food=None, quantity=1, unit="pack", location="cupboard", event_type="add",
+                       use_by=t + timedelta(days=200), date_label="Expiry")
+            create_lot(db, hid, product=para, food=None, quantity=1, unit="pack", location="other", event_type="add",
+                       use_by=t + timedelta(days=330), date_label="Expiry")
+            kids = list(db.scalars(select(PersonProfile).where(PersonProfile.household_id == hid, PersonProfile.kind == "child")))
+            for k in kids:
+                db.add(Regimen(household_id=hid, person_id=k.id, product_id=drops.id, dose_amount=5, dose_unit="drop", times_per_day=1,
+                               start_date=t - timedelta(days=30), source="Health visitor (sample)"))
         db.commit()
         return {"household_id": str(hid), "admin_email": admin.email,
                 "password": created_users if created_users else "(existing users unchanged)"}

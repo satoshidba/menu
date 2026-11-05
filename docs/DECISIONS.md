@@ -148,3 +148,25 @@ forwarded to the API; in stdio mode the token comes from `LARDER_TOKEN`. This me
 - Draft, apply and overwrite steps are separate tools, and `apply_receipt` requires an explicit `confirm=true`.
 
 OAuth for remote clients that only support OAuth sign-in isn't implemented. Those clients can use stdio instead.
+
+### ADR-021 — Vitamins, supplements and medicines
+Added at the household's request.
+
+**Data model.**
+- Products have a `kind`: food, pet food, supplement or medicine. Health items live in the cabinet, kept out of the
+  food pantry, recipes (medicines) and food logging.
+- Supplements carry nutrition **per dose** (basis `dose`) and count towards intake through a `MealConsumption` marked
+  `supplement`. Only the nutrients on the label are counted; the rest stay unknown.
+- Medicines never count as nutrition.
+
+**Safety stance.** Larder records label or prescriber directions entered by the household (dose, minimum interval,
+maximum doses in 24 hours, ingredients, free-text directions) and never calculates or recommends doses.
+- A dose that is too soon, over the 24-hour maximum, or from expired stock is refused with the reasons (HTTP 409).
+- It can still be recorded with explicit acknowledgement, which is stored on the dose for the record.
+- This is a memory aid that is especially useful with two adults sharing care of toddlers; every screen points to a
+  pharmacist, GP or NHS 111.
+
+**Routines.** Regimens (daily, or "as needed") drive a "due today" checklist; "as needed" items never nag.
+
+**Scopes.** Health data has its own scopes (`health:read`, `health:write`). Doses follow the same per-person and
+explicit-children rules as intake. The MCP agent preset includes the health scopes, which can be unticked.

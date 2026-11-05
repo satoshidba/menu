@@ -224,7 +224,7 @@ textarea.input { min-height: 120px; resize: vertical; line-height: 1.45; }
 .section-title { display: flex; align-items: baseline; justify-content: space-between; margin: var(--s4) 0 var(--s1); }
 .section-title h2 { font-size: 1.3125rem; }
 
-.qty { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 4.5ch; text-align: right; }
+.qty { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 4.5ch; text-align: right; white-space: nowrap; }
 .qty.bump { animation: bump var(--t-slow) var(--ease); }
 @keyframes bump { 0% { transform: translateY(-3px); opacity: .4; } 100% { transform: none; opacity: 1; } }
 

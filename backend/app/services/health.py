@@ -21,6 +21,14 @@ from .stock import consume_fefo, factors_for, usable_lots
 from .units import convert, unit_kind
 
 HEALTH_KINDS = ("supplement", "medicine")
+def qty_unit(q: float, unit: str | None) -> str:
+    """'5 drops', '1 tablet', '5 ml'."""
+    unit = unit or "dose"
+    if unit in ("ml", "g", "mg", "kg", "l", "µg") or q == 1 or unit.endswith("s"):
+        return f"{q:g} {unit}"
+    return f"{q:g} {unit}es" if unit.endswith(("sh", "ch")) else f"{q:g} {unit}s"
+
+
 ADVICE = "Larder only checks against the directions you entered. If unsure, ask a pharmacist, GP or NHS 111."
 
 
@@ -146,7 +154,7 @@ def due_today(db: Session, household_id: uuid.UUID, people_filter=None) -> list[
         out.append({
             "regimen_id": str(r.id), "person_id": str(person.id), "person": person.name, "person_kind": person.kind,
             "product_id": str(product.id), "item": f"{product.brand + ' ' if product.brand else ''}{product.name}", "kind": product.kind,
-            "dose": f"{r.dose_amount:g} {r.dose_unit}", "times_per_day": r.times_per_day, "as_needed": r.as_needed,
+            "dose": qty_unit(r.dose_amount, r.dose_unit), "times_per_day": r.times_per_day, "as_needed": r.as_needed,
             "given_today": len(given), "given_times": [g.given_at.astimezone(zone).strftime("%H:%M") for g in given],
             "remaining_today": 0 if r.as_needed else max(0, r.times_per_day - len(given)),
             "next_allowed_at": na.isoformat() if na else None, "instructions": r.instructions, "source": r.source,

@@ -91,6 +91,7 @@ Phone (390 px), tablet (820 px) and desktop (1280 px) captures of the seven repr
 | Receipt | ![](screenshots/receipt-phone.jpg) | ![](screenshots/receipt-tablet.jpg) | ![](screenshots/receipt-desktop.jpg) |
 | Nutrition | ![](screenshots/nutrition-phone.jpg) | ![](screenshots/nutrition-tablet.jpg) | ![](screenshots/nutrition-desktop.jpg) |
 | Plan | ![](screenshots/plan-phone.jpg) | ![](screenshots/plan-tablet.jpg) | ![](screenshots/plan-desktop.jpg) |
+| Medicines & vitamins | ![](screenshots/health-phone.jpg) | ![](screenshots/health-tablet.jpg) | ![](screenshots/health-desktop.jpg) |
 | Design system | ![](screenshots/design-phone.jpg) | ![](screenshots/design-tablet.jpg) | ![](screenshots/design-desktop.jpg) |
 
 **Issues found in review and fixed:**

@@ -39,6 +39,10 @@ How to behave:
 - Pet food is separate inventory and never counts as human food or nutrition. Don't give pet feeding advice.
 - Nutrition values are estimates unless from verified labels. "partial" means a lower bound; unknown is not zero.
 - When someone is out (see get_week_plan absences), plan for the people at home.
+- Medicines and vitamins: never suggest, calculate or change a dose, and never say a medicine is safe for someone.
+  Only record what the user tells you was given. If log_dose reports warnings (too soon, too many in 24 hours,
+  expired), relay them word for word and only record with acknowledge_warnings=true if the user explicitly confirms.
+  Suggest asking a pharmacist, GP or NHS 111 when there is any doubt.
 Items, recipes and people can usually be given by name; ids are returned by the read tools.
 """
 
@@ -731,6 +735,120 @@ async def record_cooked_meal(ctx: Context, recipe: Annotated[str, Field(descript
             "eaten": [{"person": names.get(x["person_id"], x["person_id"]), "servings": x["amount"], "kcal": x["nutrition"].get("energy_kcal"),
                        "status": x["provenance"]["status"].get("energy_kcal")} for x in out["consumptions"]],
             "unassigned_servings": out["unaccounted_servings"]}
+
+
+# ---- medicines, vitamins & supplements ----------------------------------------------------------------------------------------
+
+async def resolve_cabinet_item(c: LarderClient, item: str) -> dict:
+    items = (await c.get("/health/cabinet"))["items"]
+    for i in items:
+        full = f"{i['brand'] + ' ' if i['brand'] else ''}{i['name']}".lower()
+        if item == i["product_id"] or item.strip().lower() in (i["name"].lower(), full):
+            return i
+    partial = [i for i in items if item.strip().lower() in f"{i['brand'] or ''} {i['name']}".lower()]
+    if len(partial) == 1:
+        return partial[0]
+    raise ToolError(f"No single cabinet item matches '{item}'. Cabinet: {', '.join(i['name'] for i in items) or 'empty'}")
+
+
+@mcp.tool(annotations=READ)
+async def get_medicine_cabinet(ctx: Context, kind: Literal["supplement", "medicine"] | None = None) -> dict:
+    """Medicines, vitamins and supplements (e.g. protein powder) with stock, expiry, the label directions the household
+    entered and, for supplements, nutrients per dose. Needs the health:read scope."""
+    c = client(ctx)
+    cab = await c.get("/health/cabinet", kind=kind)
+    keep = ("product_id", "kind", "name", "brand", "dose", "stock", "earliest_expiry", "low_stock", "label_min_interval_hours",
+            "label_max_doses_24h", "active_ingredients", "label_directions", "nutrition_per_dose")
+    return {"items": [{k: i[k] for k in keep} for i in cab["items"]], "advice": cab["advice"]}
+
+
+@mcp.tool(annotations=READ)
+async def get_doses_due(ctx: Context) -> dict:
+    """Today's medicine and vitamin routines: who still needs which dose, what's been given, when the entered directions
+    allow the next dose, and cabinet items expiring soon or running low."""
+    c = client(ctx)
+    t = await c.get("/health/today")
+    return {"due": [{k: d[k] for k in ("regimen_id", "person", "item", "dose", "times_per_day", "as_needed", "given_today", "given_times",
+                                         "remaining_today", "next_allowed_at", "instructions", "source")} for d in t["due"]],
+            "attention": t["attention"], "advice": t["advice"]}
+
+
+@mcp.tool(annotations=WRITE)
+async def log_dose(ctx: Context, person: Annotated[str, Field(description="Name or id")],
+                   item: Annotated[str, Field(description="Cabinet item name or id (medicine or supplement)")],
+                   amount: Annotated[float | None, Field(description="Defaults to the routine's or label's dose")] = None,
+                   unit: str | None = None,
+                   given_at: Annotated[str | None, Field(description="ISO date-time; defaults to now")] = None,
+                   acknowledge_warnings: Annotated[bool, Field(description="Only true if the user explicitly confirmed after hearing the warnings")] = False,
+                   notes: str | None = None) -> dict:
+    """Record a dose the user says was given/taken. Checks it against the directions the household entered (minimum
+    interval, maximum in 24 hours, expiry). If anything conflicts, nothing is recorded and the warnings are returned:
+    tell the user exactly what they say. Supplements also count towards the person's nutrition; medicines never do."""
+    c = client(ctx)
+    p = await resolve_person(c, person)
+    it = await resolve_cabinet_item(c, item)
+    regimen_id = None
+    try:
+        regs = await c.get("/health/regimens", person_id=p["id"])
+        regimen_id = next((r["regimen_id"] for r in regs if r["product_id"] == it["product_id"]), None)
+    except ToolError:
+        pass
+    body = {"person_id": p["id"], "product_id": it["product_id"], "regimen_id": regimen_id, "amount": amount, "unit": unit,
+            "given_at": given_at, "acknowledge_warnings": acknowledge_warnings, "notes": notes}
+    try:
+        r = await c.post("/health/doses", body)
+    except ToolError as e:
+        if "Check before giving" in str(e):
+            return {"recorded": False, "needs_confirmation": True, "warnings": str(e).split(": ", 1)[-1],
+                    "advice": "Read these to the user. Record only if they explicitly confirm (acknowledge_warnings=true)."}
+        raise
+    return {"recorded": True, "dose": {k: r["dose"][k] for k in ("dose_id", "person", "item", "amount", "unit", "local_time")},
+            "notes": [n["message"] for n in r["notes"]], "nutrition_counted": (r["nutrition_counted"] or {}).get("nutrition")}
+
+
+@mcp.tool(annotations=READ)
+async def list_doses(ctx: Context, person: str | None = None, from_date: str | None = None, to_date: str | None = None) -> list[dict]:
+    """Doses recorded in a date range (default the last 7 days), newest first."""
+    c = client(ctx)
+    pid = (await resolve_person(c, person))["id"] if person else None
+    d = await c.get("/health/doses", person_id=pid, **{"from": from_date, "to": to_date})
+    return [{k: x[k] for k in ("dose_id", "person", "item", "amount", "unit", "local_time", "warnings_acknowledged", "notes")} for x in d["doses"]]
+
+
+@mcp.tool(annotations=WRITE)
+async def add_cabinet_item(ctx: Context, kind: Literal["supplement", "medicine"], name: str, brand: str | None = None,
+                           pack_quantity: float | None = None, pack_unit: str | None = None,
+                           dose_amount: Annotated[float | None, Field(description="One dose, exactly as on the label")] = None,
+                           dose_unit: str | None = None,
+                           label_min_interval_hours: Annotated[float | None, Field(description="From the label/prescription only")] = None,
+                           label_max_doses_24h: Annotated[int | None, Field(description="From the label/prescription only")] = None,
+                           active_ingredients: str | None = None, label_directions: str | None = None,
+                           nutrition_per_dose: Annotated[dict[str, float] | None, Field(description="Supplements only, from the label, e.g. {'vitamin_d_ug': 10} or {'protein_g': 24, 'energy_kcal': 120}")] = None,
+                           packs_in_stock: float | None = None, expiry: str | None = None) -> dict:
+    """Add a medicine, vitamin or supplement to the cabinet using details the user reads from the packet. Don't fill in
+    directions or nutrient values from your own knowledge."""
+    c = client(ctx)
+    r = await c.post("/health/items", {"kind": kind, "name": name, "brand": brand, "pack_quantity": pack_quantity, "pack_unit": pack_unit,
+                                       "dose_amount": dose_amount, "dose_unit": dose_unit, "label_min_interval_hours": label_min_interval_hours,
+                                       "label_max_doses_24h": label_max_doses_24h, "active_ingredients": active_ingredients,
+                                       "label_directions": label_directions, "nutrition_per_dose": nutrition_per_dose,
+                                       "stock_quantity": packs_in_stock, "expiry": expiry})
+    return {k: r[k] for k in ("product_id", "kind", "name", "dose", "stock", "earliest_expiry")}
+
+
+@mcp.tool(annotations=WRITE)
+async def add_routine(ctx: Context, person: str, item: str, times_per_day: int = 1, as_needed: bool = False,
+                      dose_amount: float | None = None, until: str | None = None,
+                      source: Annotated[str | None, Field(description="Who advised it, e.g. 'GP', 'Health visitor', 'Label'")] = None,
+                      instructions: str | None = None) -> dict:
+    """Set up a routine (e.g. 'Mia: vitamin drops once a day', 'Sam: antibiotics 3 times a day until Friday') as the user
+    describes it. It drives the 'due today' reminders; it isn't advice."""
+    c = client(ctx)
+    p = await resolve_person(c, person)
+    it = await resolve_cabinet_item(c, item)
+    r = await c.post("/health/regimens", {"person_id": p["id"], "product_id": it["product_id"], "times_per_day": times_per_day, "as_needed": as_needed,
+                                          "dose_amount": dose_amount, "end_date": until, "source": source, "instructions": instructions})
+    return {k: r[k] for k in ("regimen_id", "person", "item", "dose_amount", "dose_unit", "times_per_day", "as_needed", "end_date")}
 
 
 # ---- receipts ------------------------------------------------------------------------------------------------------------------

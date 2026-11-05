@@ -5,6 +5,7 @@ import { DateBadge, Empty, ErrorNote, Loading, Media, useApi } from "../componen
 import { useAuth } from "../lib/auth";
 import { fmtDayLong, isoToday } from "../lib/format";
 import { REASONS } from "./Plan";
+import { useGiveDose } from "./Health";
 
 function greeting() {
   const h = new Date().getHours();
@@ -14,6 +15,7 @@ function greeting() {
 export default function Today() {
   const { me } = useAuth();
   const { data, error, loading, reload } = useApi<any>("/today");
+  const { give, sheet } = useGiveDose(reload);
   return (
     <>
       <div className="page-head">
@@ -30,6 +32,7 @@ export default function Today() {
       </div>
       {error && <ErrorNote error={error} retry={reload} />}
       {loading && !data && <Loading lines={5} />}
+      {sheet}
       {data && (
         <div className="today-grid">
           <div className="today-main">
@@ -42,7 +45,20 @@ export default function Today() {
             )}
           </div>
           <div>
-            <div className="section-title" style={{ marginTop: 0 }}><h2>Use soon</h2><Link to="/pantry" className="small">Pantry</Link></div>
+            {data.health?.due?.length > 0 && (
+              <>
+                <div className="section-title" style={{ marginTop: 0 }}><h2>Doses due</h2><Link to="/health" className="small">Medicines &amp; vitamins</Link></div>
+                <ul className="list" style={{ marginBottom: 24 }}>
+                  {data.health.due.map((d: any) => (
+                    <li key={d.regimen_id} className="list-row">
+                      <span className="grow"><span className="title">{d.person} · {d.item}</span><span className="meta" style={{ display: "block" }}>{d.dose} · {d.given_today} of {d.times_per_day} today</span></span>
+                      <button className="btn small primary" onClick={() => give({ person_id: d.person_id, regimen_id: d.regimen_id })}>Given</button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <div className="section-title" style={{ marginTop: data.health?.due?.length ? undefined : 0 }}><h2>Use soon</h2><Link to="/pantry" className="small">Pantry</Link></div>
             {data.use_soon.length === 0 ? <p className="muted small">Nothing is close to its date.</p> : (
               <ul className="list">
                 {data.use_soon.map((u: any) => (
